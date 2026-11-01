@@ -11,8 +11,9 @@ final class ShakeMonitor {
     @ObservationIgnored private let manager = CMMotionManager()
     @ObservationIgnored private var detector = ShakeDetector()
 
-    init() {
+    init(initialCount: Int = 0) {
         isAvailable = manager.isDeviceMotionAvailable || manager.isAccelerometerAvailable
+        count = initialCount
     }
 
     func start() {
@@ -60,7 +61,7 @@ struct ShakeChallengeView: View {
     var onActivity: () -> Void
     var onComplete: () -> Void
 
-    @State private var monitor = ShakeMonitor()
+    @State private var monitor = ShakeMonitor(initialCount: Showcase.isActive ? 34 : 0)
     @State private var finished = false
     @State private var bump = false
 
@@ -132,7 +133,7 @@ struct ShakeChallengeView: View {
 
     private var showsManualButton: Bool {
         #if targetEnvironment(simulator)
-        return true
+        return !Showcase.isActive
         #else
         return !monitor.isAvailable
         #endif

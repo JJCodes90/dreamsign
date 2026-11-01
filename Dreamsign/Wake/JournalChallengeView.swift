@@ -43,6 +43,7 @@ struct JournalChallengeView: View {
         .onChange(of: text) { onActivity() }
         .onAppear {
             if text.isEmpty, let draft = UserDefaults.standard.string(forKey: draftDefaultsKey) { text = draft }
+            if text.isEmpty, Showcase.isActive { text = Showcase.dreamText }
             assessment = JournalAssessment(requiredWords: requirement.minimumWords)
             focused = true
         }

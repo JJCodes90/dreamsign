@@ -7,6 +7,10 @@ struct DreamsignApp: App {
     private let container: ModelContainer
 
     init() {
+        if Showcase.isActive {
+            container = Showcase.makeContainer()
+            return
+        }
         do {
             container = try ModelContainer(for: WakeAlarm.self, DreamEntry.self, DreamSign.self)
         } catch {

@@ -115,3 +115,53 @@ jobs:
           name: archive-log
           path: archive.log
           retention-days: 7
+
+  screenshots:
+    name: Screenshots (iPhone Duo + iPhone 17)
+    if: github.event_name != 'pull_request'
+    runs-on: xcode-27
+    timeout-minutes: 50
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_27.1.app
+          xcodebuild -version
+
+      - name: Build for the simulator
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Dreamsign.xcodeproj \
+            -scheme Dreamsign \
+            -configuration Debug \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | xcbeautify --renderer github-actions
+
+      - name: Capture
+        run: |
+          scripts/capture_screenshots.sh "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/Dreamsign.app" shots
+          python3 scripts/make_gallery.py shots
+
+      - name: Publish to the ci-screenshots branch
+        run: |
+          cd shots
+          git init --quiet -b ci-screenshots
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit --quiet -m "Screenshots for ${GITHUB_SHA::7}"
+          git push --force --quiet "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-screenshots
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: shots
+          retention-days: 14

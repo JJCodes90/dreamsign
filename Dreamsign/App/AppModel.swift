@@ -11,7 +11,7 @@ final class AppModel {
 
     nonisolated static let refreshTaskID = "com.jjcodes.dreamsign.resync"
 
-    var tab: Tab = .alarms
+    var tab: Tab = Showcase.tab ?? .alarms
     var wake: WakeSession?
     /// Set once the wake flow's enforced steps are done (MILD / back-to-sleep may still be showing).
     var wakeFinishedAt: Date?
@@ -52,6 +52,7 @@ final class AppModel {
     }
 
     func becameActive(_ context: ModelContext) async {
+        guard !Showcase.isActive else { return }
         await syncAlarms(context)
         presentWakeIfNeeded(context)
     }

@@ -12,8 +12,9 @@ final class WakeFlowModel {
     var savedEntry: DreamEntry?
     @ObservationIgnored private var lastPing = Date.distantPast
 
-    init(session: WakeSession) {
+    init(session: WakeSession, startIndex: Int = 0) {
         self.session = session
+        index = startIndex
     }
 
     var current: WakeSession.Step? {
@@ -28,12 +29,13 @@ final class WakeFlowModel {
     }
 
     func begin() async {
+        guard !Showcase.isActive else { return }
         await AlarmCoordinator.shared.beginWake(session.occurrence)
     }
 
     /// Any sign of life pushes the next ring back (throttled here and in the planner).
     func activity() {
-        guard !enforcedComplete, Date.now.timeIntervalSince(lastPing) > 15 else { return }
+        guard !enforcedComplete, !Showcase.isActive, Date.now.timeIntervalSince(lastPing) > 15 else { return }
         lastPing = .now
         let id = session.occurrence.id
         Task { await AlarmCoordinator.shared.noteActivity(id) }
@@ -44,6 +46,7 @@ final class WakeFlowModel {
         guard !enforcedComplete, !session.steps.dropFirst(index).contains(where: \.isEnforced) else { return }
         enforcedComplete = true
         app.wakeFinishedAt = .now
+        guard !Showcase.isActive else { return }
         await AlarmCoordinator.shared.completeWake(session.occurrence)
         if session.disablesAlarm, let alarm = app.alarm(session.occurrence.alarmID, context) {
             alarm.isEnabled = false
@@ -58,8 +61,10 @@ struct WakeFlowView: View {
     @Environment(\.modelContext) private var context
     @State private var flow: WakeFlowModel
 
-    init(session: WakeSession) {
-        _flow = State(initialValue: WakeFlowModel(session: session))
+    init(session: WakeSession, startIndex: Int = 0, savedEntry: DreamEntry? = nil) {
+        let model = WakeFlowModel(session: session, startIndex: startIndex)
+        model.savedEntry = savedEntry
+        _flow = State(initialValue: model)
     }
 
     var body: some View {

@@ -10,7 +10,9 @@ struct RootView: View {
     var body: some View {
         @Bindable var model = model
         Group {
-            if onboarded {
+            if let screen = Showcase.screen, Showcase.tab == nil {
+                ShowcaseRoot(screen: screen)
+            } else if onboarded || Showcase.isActive {
                 TabView(selection: $model.tab) {
                     Tab("Alarms", systemImage: "alarm.fill", value: AppModel.Tab.alarms) { AlarmsView() }
                     Tab("Journal", systemImage: "book.closed.fill", value: AppModel.Tab.journal) { JournalView() }
@@ -25,6 +27,7 @@ struct RootView: View {
             }
         }
         .task {
+            guard !Showcase.isActive else { return }
             model.coordinator.startObserving()
             await model.becameActive(context)
         }
