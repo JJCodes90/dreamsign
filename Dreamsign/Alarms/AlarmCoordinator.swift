@@ -182,10 +182,10 @@ final class AlarmCoordinator {
     }
 
     private func performDefer(_ occurrenceID: String) async {
-        let spec = state.occurrence(occurrenceID).flatMap { state.spec($0.alarmID) }
-        let (state, operations) = planner.deferChain(of: occurrenceID, state: state, now: .now, spec: spec)
+        let spec = self.state.occurrence(occurrenceID).flatMap { self.state.spec($0.alarmID) }
+        let (deferred, operations) = planner.deferChain(of: occurrenceID, state: self.state, now: .now, spec: spec)
         guard !operations.isEmpty else { return }
-        self.state = state
+        self.state = deferred
         let applied = await client.apply(operations)
         absorb(applied)
         save()

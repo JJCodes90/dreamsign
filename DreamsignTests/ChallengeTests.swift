@@ -45,7 +45,10 @@ struct MathProblemGeneratorTests {
     @Test func seededGeneratorIsDeterministic() {
         var a = MathProblemGenerator(source: SeededRandomNumberGenerator(seed: 99))
         var b = MathProblemGenerator(source: SeededRandomNumberGenerator(seed: 99))
-        for _ in 0..<20 { #expect(a.next(.hard) == b.next(.hard)) }
+        for _ in 0..<20 {
+            let lhs = a.next(.hard), rhs = b.next(.hard)
+            #expect(lhs == rhs)
+        }
     }
 
     @Test func difficultyShapesTheAnswerRange() {
@@ -85,12 +88,18 @@ struct ShakeDetectorTests {
     }
 
     @Test func releaseIsRequiredBetweenShakes() {
+        // `process` is mutating, so capture each result before handing it to #expect.
         var detector = ShakeDetector()
-        #expect(detector.process(magnitude: 1.5, at: 0))
-        #expect(!detector.process(magnitude: 0.9, at: 0.3))   // never dropped below release
-        #expect(!detector.process(magnitude: 1.6, at: 0.6))
-        #expect(!detector.process(magnitude: 0.3, at: 0.7))   // re-arms
-        #expect(detector.process(magnitude: 1.6, at: 0.9))
+        let first = detector.process(magnitude: 1.5, at: 0)
+        let notReleased = detector.process(magnitude: 0.9, at: 0.3)   // never dropped below release
+        let stillHeld = detector.process(magnitude: 1.6, at: 0.6)
+        let rearm = detector.process(magnitude: 0.3, at: 0.7)         // re-arms
+        let second = detector.process(magnitude: 1.6, at: 0.9)
+        #expect(first)
+        #expect(!notReleased)
+        #expect(!stillHeld)
+        #expect(!rearm)
+        #expect(second)
     }
 
     @Test func magnitudeIsEuclidean() {

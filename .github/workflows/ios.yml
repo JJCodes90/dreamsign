@@ -12,15 +12,16 @@ concurrency:
 
 jobs:
   build-and-test:
-    name: Build & test (iOS Simulator)
-    runs-on: macos-26
+    name: Build & test (iPhone Duo simulator)
+    # Xcode 27.1+ is required: iPhone Duo's full-screen layout and fold APIs ship in the iOS 27.1 SDK.
+    runs-on: xcode-27
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
       - name: Select Xcode
         run: |
-          sudo xcode-select -s /Applications/Xcode_26.6.app
+          sudo xcode-select -s /Applications/Xcode_27.1.app
           xcodebuild -version
 
       - name: Pick simulator
@@ -30,10 +31,11 @@ jobs:
           import json, sys
           d = json.load(sys.stdin)["devices"]
           rt = sorted([k for k in d if "iOS" in k], key=lambda k: [int(x) for x in k.split("iOS-")[-1].split("-")])
-          for k in reversed(rt):
-              for dev in d[k]:
-                  if dev["name"].startswith("iPhone 17") and "Pro" not in dev["name"]:
-                      print(dev["udid"]); sys.exit()
+          for preferred in ("iPhone Duo", "iPhone 17"):
+              for k in reversed(rt):
+                  for dev in d[k]:
+                      if dev["name"] == preferred:
+                          print(dev["udid"]); sys.exit()
           ')
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
           echo "Simulator: $UDID"
