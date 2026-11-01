@@ -19,6 +19,7 @@ enum Showcase {
         case "alarms": .alarms
         case "journal": .journal
         case "insights": .insights
+        case "learn": .learn
         default: nil
         }
     }
@@ -102,6 +103,10 @@ enum Showcase {
             let entry = DreamEntry(text: text, createdAt: created, isNoRecall: noRecall, source: index % 5 == 2 ? .wbtb : .alarm)
             entry.isLucid = lucid && index < 12
             entry.signs = tagged
+            entry.vividness = noRecall ? 0 : Int.random(in: 2...5, using: &random)
+            entry.mood = noRecall ? nil : DreamMood.allCases.randomElement(using: &random)
+            entry.techniqueRaw = [WBTBTechnique.mild.rawValue, WBTBTechnique.ssild.rawValue, "", ""][index % 4]
+            entry.isNightmare = index == 7
             context.insert(entry)
         }
         try? context.save()
@@ -149,6 +154,18 @@ struct ShowcaseRoot: View {
             WakeFlowView(session: wbtbSession, startIndex: 1, savedEntry: entries.first)
         case "sleep":
             WakeFlowView(session: wbtbSession, startIndex: 2)
+        case "lesson":
+            if let lesson = Course.lesson("mild") {
+                NavigationStack {
+                    LessonView(lesson: lesson, progress: LearnProgress.shared, onPractice: { _ in }, onNext: { _ in })
+                }
+            }
+        case "reality":
+            RealityCheckView()
+        case "ssild":
+            PracticeHost(action: .ssild)
+        case "nightstand":
+            NightstandView()
         default:
             Text("Unknown showcase screen: \(screen)")
         }

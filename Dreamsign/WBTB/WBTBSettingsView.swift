@@ -16,6 +16,9 @@ struct WBTBSettingsView: View {
     @State private var sound: AlarmSound
     @State private var mildMinutes: Int
     @State private var journalWords: Int
+    @State private var technique: WBTBTechnique
+    @AppStorage(AudioPreferences.voiceKey) private var voiceGuidance = true
+    @AppStorage(AudioPreferences.soundscapeKey) private var sleepSounds = true
 
     static let offsetRange: ClosedRange<Double> = 270...360
 
@@ -28,6 +31,7 @@ struct WBTBSettingsView: View {
         _sound = State(initialValue: plan.sound)
         _mildMinutes = State(initialValue: plan.mildMinutes)
         _journalWords = State(initialValue: plan.wbtbJournalWords)
+        _technique = State(initialValue: plan.wbtbTechnique)
     }
 
     private var wakeTime: AlarmTime {
@@ -86,13 +90,28 @@ struct WBTBSettingsView: View {
                     Text("Chosen by the night you go to bed. Two or three nights a week protects your sleep.")
                 }
 
+                Section {
+                    Picker("Technique", selection: $technique) {
+                        ForEach(WBTBTechnique.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                } header: {
+                    Text("Technique")
+                } footer: {
+                    Text("\(technique.detail). MILD and SSILD worked about equally well in the largest study — pick whichever feels easier.")
+                }
+
                 Section("When it wakes you") {
                     Picker("Journal", selection: $journalWords) {
                         ForEach([8, 10, 15, 25], id: \.self) { Text("\($0) words").tag($0) }
                     }
-                    Picker("Intention practice", selection: $mildMinutes) {
-                        ForEach([1, 2, 3, 5], id: \.self) { Text("\($0) min").tag($0) }
+                    if technique == .mild {
+                        Picker("Intention practice", selection: $mildMinutes) {
+                            ForEach([1, 2, 3, 5], id: \.self) { Text("\($0) min").tag($0) }
+                        }
                     }
+                    Toggle("Voice guidance", isOn: $voiceGuidance).tint(Palette.iris)
+                    Toggle("Sleep sounds", isOn: $sleepSounds).tint(Palette.iris)
                     NavigationLink {
                         SoundPickerView(selection: $sound)
                     } label: {
@@ -143,6 +162,7 @@ struct WBTBSettingsView: View {
         plan.sound = sound
         plan.mildMinutes = mildMinutes
         plan.wbtbJournalWords = journalWords
+        plan.wbtbTechnique = technique
         plan.touch()
         try? context.save()
         Task { await model.syncAlarms(context) }

@@ -13,7 +13,7 @@ OUT="$2"
 BUNDLE_ID="com.jjcodes.dreamsign"
 mkdir -p "$OUT"
 
-SCREENS="alarms journal insights onboarding alarm-editor wbtb entry settings wake-shake wake-journal wake-math wake-complete mild sleep"
+SCREENS="alarms journal insights learn lesson reality ssild nightstand onboarding alarm-editor wbtb entry settings wake-shake wake-journal wake-math wake-complete mild sleep"
 
 runtime_for() { # device name → newest runtime identifier that offers it
   xcrun simctl list devicetypes -j >/dev/null

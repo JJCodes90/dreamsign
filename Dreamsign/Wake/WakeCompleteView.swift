@@ -7,6 +7,7 @@ struct WakeCompleteView: View {
     var onDone: () -> Void
 
     @Query private var entries: [DreamEntry]
+    @Environment(\.modelContext) private var context
     @State private var tagging = false
     @State private var appeared = false
 
@@ -59,6 +60,15 @@ struct WakeCompleteView: View {
                 }
             }
             .padding(.top, 4)
+            if let entry, !entry.isNoRecall {
+                VStack(spacing: 6) {
+                    Text("How vivid was it?")
+                        .font(.subheadline)
+                        .foregroundStyle(Palette.textSecondary)
+                    VividnessPicker(value: Binding(get: { entry.vividness }, set: { entry.vividness = $0; try? context.save() }))
+                }
+                .padding(.top, 10)
+            }
             Spacer(minLength: 8)
         }
     }

@@ -1,6 +1,28 @@
 import Foundation
 import SwiftData
 
+/// What you practice during a lucid window. Both had similar success in the International
+/// Lucid Dream Induction Study (Aspy, 2020).
+enum WBTBTechnique: String, Codable, CaseIterable, Identifiable, Sendable {
+    case mild, ssild
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .mild: "MILD"
+        case .ssild: "SSILD"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .mild: String(localized: "Recall, intention, visualization")
+        case .ssild: String(localized: "Cycle through sight, sound, touch")
+        }
+    }
+}
+
 /// A user alarm. The single WBTB plan is a `WakeAlarm` with `kind == .wbtb` whose time is
 /// derived from bedtime + offset.
 @Model
@@ -24,6 +46,7 @@ final class WakeAlarm {
     var bedtimeMinute: Int = 0
     var wbtbOffsetMinutes: Int = 300
     var mildMinutes: Int = 3
+    var wbtbTechniqueRaw: String = WBTBTechnique.mild.rawValue
     var wbtbJournalWords: Int = JournalRequirement.quick.minimumWords
 
     init(time: AlarmTime = AlarmTime(hour: 7, minute: 0), weekdays: WeekdaySet = .weekdays, kind: AlarmKind = .wake) {
@@ -68,6 +91,11 @@ final class WakeAlarm {
     }
 
     // MARK: WBTB
+
+    var wbtbTechnique: WBTBTechnique {
+        get { WBTBTechnique(rawValue: wbtbTechniqueRaw) ?? .mild }
+        set { wbtbTechniqueRaw = newValue.rawValue }
+    }
 
     var bedtime: AlarmTime {
         get { AlarmTime(hour: bedtimeHour, minute: bedtimeMinute) }

@@ -7,7 +7,7 @@ import SwiftData
 @MainActor
 @Observable
 final class AppModel {
-    enum Tab: Hashable { case alarms, journal, insights }
+    enum Tab: Hashable { case alarms, journal, insights, learn }
 
     nonisolated static let refreshTaskID = "com.jjcodes.dreamsign.resync"
 
@@ -109,14 +109,14 @@ struct WakeSession: Identifiable {
         case challenge(Challenge)
         /// Used when an alarm has no challenges: one tap to confirm.
         case confirm
-        case mild
+        case technique(WBTBTechnique)
         case backToSleep
 
         var id: String {
             switch self {
             case .challenge(let challenge): challenge.id.uuidString
             case .confirm: "confirm"
-            case .mild: "mild"
+            case .technique(let technique): technique.rawValue
             case .backToSleep: "sleep"
             }
         }
@@ -124,7 +124,7 @@ struct WakeSession: Identifiable {
         var isEnforced: Bool {
             switch self {
             case .challenge, .confirm: true
-            case .mild, .backToSleep: false
+            case .technique, .backToSleep: false
             }
         }
     }
@@ -152,7 +152,7 @@ struct WakeSession: Identifiable {
         case .wbtb:
             var journal = Challenge(kind: .journal)
             journal.journalWords = alarm?.wbtbJournalWords ?? JournalRequirement.quick.minimumWords
-            steps = [.challenge(journal), .mild, .backToSleep]
+            steps = [.challenge(journal), .technique(alarm?.wbtbTechnique ?? .mild), .backToSleep]
         }
     }
 }

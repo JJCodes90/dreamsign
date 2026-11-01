@@ -49,6 +49,7 @@ struct MILDView: View {
             .onChange(of: phase) { _, newPhase in SleepAudio.shared.mildPhaseChanged(to: newPhase) }
         }
         .task {
+            TechniqueLog.record(.mild)
             SleepAudio.shared.beginMILDGuidance()
             try? await Task.sleep(for: .seconds(total))
             if !Task.isCancelled { finish() }

@@ -40,6 +40,9 @@ struct JournalEntryView: View {
                     if entry.isNoRecall {
                         Chip(text: String(localized: "No recall"), symbol: "cloud.fog", tint: Palette.textSecondary)
                     }
+                    if let technique = entry.technique {
+                        Chip(text: String(localized: "After \(technique.title)"), symbol: "moon.stars", tint: Palette.iris)
+                    }
                 }
 
                 Text(entry.text)
@@ -48,6 +51,10 @@ struct JournalEntryView: View {
                     .foregroundStyle(entry.isNoRecall ? Palette.textSecondary : Palette.text)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
+
+                if !entry.isNoRecall {
+                    EntryDetailsCard(entry: entry) { try? context.save() }
+                }
 
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
@@ -272,5 +279,99 @@ struct SignTaggerView: View {
         entry.signs.append(sign)
         try? context.save()
         query = ""
+    }
+}
+
+/// Vividness, mood and nightmare flag — quick to set, useful in Insights.
+struct EntryDetailsCard: View {
+    @Bindable var entry: DreamEntry
+    var onChange: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            SectionHeader("How it felt")
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Vividness").font(.subheadline).foregroundStyle(Palette.textSecondary)
+                VividnessPicker(value: $entry.vividness)
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Mood").font(.subheadline).foregroundStyle(Palette.textSecondary)
+                FlowLayout {
+                    ForEach(DreamMood.allCases) { mood in
+                        let selected = entry.mood == mood
+                        Button {
+                            entry.mood = selected ? nil : mood
+                        } label: {
+                            Label(mood.title, systemImage: mood.symbol)
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(selected ? Palette.ink : Palette.textSecondary)
+                                .padding(.horizontal, 12)
+                                .frame(minHeight: 36)
+                                .background(Capsule().fill(selected ? Palette.dawn : Palette.surfaceRaised))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityAddTraits(selected ? .isSelected : [])
+                    }
+                }
+            }
+            Toggle(isOn: $entry.isNightmare) {
+                Label("Nightmare", systemImage: "bolt.heart")
+                    .foregroundStyle(Palette.text)
+            }
+            .tint(Palette.ember)
+        }
+        .card()
+        .onChange(of: entry.vividness) { onChange() }
+        .onChange(of: entry.moodRaw) { onChange() }
+        .onChange(of: entry.isNightmare) { onChange() }
+        .sensoryFeedback(.selection, trigger: entry.vividness)
+    }
+}
+
+/// Five big dots, 1…5. Tap the current value again to clear it.
+struct VividnessPicker: View {
+    @Binding var value: Int
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ForEach(1...5, id: \.self) { level in
+                Button {
+                    value = value == level ? 0 : level
+                } label: {
+                    Circle()
+                        .fill(level <= value ? Palette.iris : Palette.surfaceRaised)
+                        .overlay(Circle().strokeBorder(Palette.iris.opacity(level <= value ? 0 : 0.35)))
+                        .frame(width: 30, height: 30)
+                        .frame(width: 44, height: 44)
+                        .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+            }
+            Text(label)
+                .font(.subheadline)
+                .foregroundStyle(Palette.textSecondary)
+                .padding(.leading, 4)
+        }
+        .accessibilityElement()
+        .accessibilityLabel("Vividness")
+        .accessibilityValue(value == 0 ? Text("Not rated") : Text("\(value) of 5"))
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: value = min(value + 1, 5)
+            case .decrement: value = max(value - 1, 0)
+            @unknown default: break
+            }
+        }
+    }
+
+    private var label: String {
+        switch value {
+        case 1: String(localized: "Faint")
+        case 2: String(localized: "Hazy")
+        case 3: String(localized: "Clear")
+        case 4: String(localized: "Vivid")
+        case 5: String(localized: "Lifelike")
+        default: ""
+        }
     }
 }

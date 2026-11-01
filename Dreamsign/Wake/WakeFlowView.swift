@@ -99,7 +99,9 @@ struct WakeFlowView: View {
             challengeView(challenge)
         case .confirm?:
             ConfirmAwakeView { advance() }
-        case .mild?:
+        case .technique(.ssild)?:
+            SSILDView { advance() }
+        case .technique(.mild)?:
             MILDView(minutes: flow.session.mildMinutes, dreamText: flow.savedEntry?.isNoRecall == false ? flow.savedEntry?.text : nil) {
                 advance()
             }

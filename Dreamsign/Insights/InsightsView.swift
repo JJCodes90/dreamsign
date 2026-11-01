@@ -52,6 +52,7 @@ struct InsightsView: View {
         WeeklyChart(buckets: JournalStats.entriesPerWeek(entries.map(\.createdAt), weeks: 8,
                                                          now: .now, calendar: calendar))
         TopSigns(signs: signs)
+        TechniqueCard(entries: entries)
     }
 
     private func column<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
@@ -219,6 +220,66 @@ private struct TopSigns: View {
                     }
                     .buttonStyle(.plain)
                 }
+            }
+        }
+        .card()
+    }
+}
+
+/// Lucid rate per technique — personal evidence for what works.
+private struct TechniqueCard: View {
+    let entries: [DreamEntry]
+
+    private struct Row: Identifiable {
+        let title: String
+        let symbol: String
+        let total: Int
+        let lucid: Int
+        var id: String { title }
+        var rate: Double { total == 0 ? 0 : Double(lucid) / Double(total) }
+    }
+
+    private var rows: [Row] {
+        let recalled = entries.filter { !$0.isNoRecall }
+        var rows = WBTBTechnique.allCases.map { technique in
+            let group = recalled.filter { $0.technique == technique }
+            return Row(title: String(localized: "After \(technique.title)"), symbol: "moon.stars",
+                       total: group.count, lucid: group.filter(\.isLucid).count)
+        }
+        let plain = recalled.filter { $0.technique == nil }
+        rows.append(Row(title: String(localized: "No technique"), symbol: "moon",
+                        total: plain.count, lucid: plain.filter(\.isLucid).count))
+        return rows.filter { $0.total > 0 }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("What's working")
+                .font(.headline)
+                .foregroundStyle(Palette.text)
+            if rows.count < 2 {
+                Text("Try a lucid window with MILD or SSILD on a few nights. Your lucid rate for each will show up here, next to nights without one.")
+                    .font(.subheadline)
+                    .foregroundStyle(Palette.textSecondary)
+            } else {
+                ForEach(rows) { row in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Label(row.title, systemImage: row.symbol)
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(Palette.text)
+                            Spacer()
+                            Text("\(row.lucid) of \(row.total) lucid · \(row.rate.formatted(.percent.precision(.fractionLength(0))))")
+                                .font(.subheadline.monospacedDigit())
+                                .foregroundStyle(Palette.textSecondary)
+                        }
+                        GoalBar(progress: row.rate, tint: Palette.iris, marksCompletion: false)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+                Text("Small numbers swing a lot — give each technique a couple of weeks.")
+                    .font(.footnote)
+                    .foregroundStyle(Palette.textTertiary)
             }
         }
         .card()

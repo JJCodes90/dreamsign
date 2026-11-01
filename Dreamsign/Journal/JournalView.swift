@@ -157,6 +157,9 @@ struct JournalRow: View {
                 if entry.isNoRecall {
                     Chip(text: String(localized: "No recall"), symbol: "cloud.fog", tint: Palette.textSecondary)
                 }
+                if entry.isNightmare {
+                    Chip(text: String(localized: "Nightmare"), symbol: "bolt.heart", tint: Palette.ember)
+                }
                 if entry.source == .wbtb {
                     Image(systemName: "moon.stars")
                         .font(.caption)

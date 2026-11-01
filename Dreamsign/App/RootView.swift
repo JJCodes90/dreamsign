@@ -17,6 +17,7 @@ struct RootView: View {
                     Tab("Alarms", systemImage: "alarm.fill", value: AppModel.Tab.alarms) { AlarmsView() }
                     Tab("Journal", systemImage: "book.closed.fill", value: AppModel.Tab.journal) { JournalView() }
                     Tab("Insights", systemImage: "chart.bar.fill", value: AppModel.Tab.insights) { InsightsView() }
+                    Tab("Learn", systemImage: "graduationcap.fill", value: AppModel.Tab.learn) { LearnView() }
                 }
                 .tabBarMinimizeBehavior(.onScrollDown)
                 .fullScreenCover(item: $model.wake) { session in

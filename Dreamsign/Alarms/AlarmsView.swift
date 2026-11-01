@@ -10,6 +10,7 @@ struct AlarmsView: View {
     @State private var editing: EditorTarget?
     @State private var showingWBTB = false
     @State private var showingSettings = false
+    @State private var showingNightstand = false
 
     private var alarms: [WakeAlarm] { allAlarms.filter { $0.kind == .wake } }
     private var wbtb: WakeAlarm? { allAlarms.first { $0.kind == .wbtb } }
@@ -41,6 +42,9 @@ struct AlarmsView: View {
                 ToolbarItem(placement: .primaryAction) {
                     Button { editing = .new } label: { Label("Add Alarm", systemImage: "plus") }
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { showingNightstand = true } label: { Label("Nightstand", systemImage: "bed.double") }
+                }
             }
             .sheet(item: $editing) { target in
                 AlarmEditorView(alarm: target.alarm)
@@ -50,6 +54,9 @@ struct AlarmsView: View {
             }
             .sheet(isPresented: $showingSettings) {
                 SettingsView()
+            }
+            .fullScreenCover(isPresented: $showingNightstand) {
+                NightstandView()
             }
         }
     }
