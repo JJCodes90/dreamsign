@@ -254,13 +254,15 @@ struct PracticeHost: View {
     }
 
     private func practiceStage<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack(alignment: .topLeading) {
             DawnBackground(progress: 0, stayNight: true)
             content()
                 .padding(.horizontal, Metrics.gutter)
+                .padding(.top, 36)
             Button(role: .close) { dismiss() }
                 .buttonStyle(.glass)
-                .padding()
+                .padding(.horizontal, Metrics.gutter)
+                .padding(.top, 8)
         }
     }
 }
