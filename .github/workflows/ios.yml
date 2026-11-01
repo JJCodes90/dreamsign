@@ -65,3 +65,53 @@ jobs:
             xcodebuild.log
             TestResults.xcresult
           retention-days: 7
+
+  ipa:
+    name: Build installable IPA (unsigned, for sideloading)
+    # Produces Dreamsign.ipa for Windows users: Sideloadly signs it with your Apple ID and installs it.
+    runs-on: xcode-27
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_27.1.app
+          xcodebuild -version
+
+      - name: Archive (Release, unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project Dreamsign.xcodeproj \
+            -scheme Dreamsign \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath "$RUNNER_TEMP/Dreamsign.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            2>&1 | tee archive.log | xcbeautify --renderer github-actions
+
+      - name: Package IPA
+        run: |
+          APP="$RUNNER_TEMP/Dreamsign.xcarchive/Products/Applications/Dreamsign.app"
+          test -d "$APP"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" -c "Print :MinimumOSVersion" -c "Print :NSAlarmKitUsageDescription" "$APP/Info.plist"
+          mkdir -p ipa/Payload
+          cp -R "$APP" ipa/Payload/
+          (cd ipa && zip -qry ../Dreamsign.ipa Payload)
+          ls -lh Dreamsign.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dreamsign-ipa
+          path: Dreamsign.ipa
+          retention-days: 30
+
+      - name: Upload archive log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: archive-log
+          path: archive.log
+          retention-days: 7

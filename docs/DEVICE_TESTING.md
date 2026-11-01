@@ -4,6 +4,8 @@ Unit tests cover the logic: scheduling, the chain planner, the journal validator
 
 ## Setup (once)
 
+> **On Windows?** Skip this section and follow [`INSTALL_WINDOWS.md`](INSTALL_WINDOWS.md). The checklist below works the same. Where it says "Test in 10 seconds", that's the in-app button, so no Mac is needed. The "Simulator notes" section needs a Mac and can be skipped.
+
 1. Open `Dreamsign.xcodeproj` in **Xcode 27.1** or later. It's required for iPhone Duo's full-screen layout and fold APIs, and to install on iOS 27.1.
 2. Select the **Dreamsign** target, then **Signing & Capabilities**. Pick your Team. If the bundle ID `com.jjcodes.dreamsign` is taken, change it to your own reverse-DNS ID.
    - **Free Apple ID:** AlarmKit needs no special entitlement, so everything works. Builds expire after 7 days; re-run from Xcode to renew.

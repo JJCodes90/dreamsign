@@ -31,6 +31,10 @@ Simulate every pose with the iPhone Duo simulator in Xcode 27.1's Device Hub.
 
 ## Getting started
 
+**On Windows (no Mac needed):** GitHub Actions builds `Dreamsign.ipa` on every push, and you install it with Sideloadly. See [`docs/INSTALL_WINDOWS.md`](docs/INSTALL_WINDOWS.md).
+
+**On a Mac:**
+
 1. Open `Dreamsign.xcodeproj` in Xcode 27.1 or later.
 2. Set your Team under the **Dreamsign** target, in **Signing & Capabilities**. Change the bundle ID if needed.
 3. Run on an iPhone (⌘R). Run the tests on a simulator (⌘U).
@@ -40,6 +44,7 @@ The project uses **synchronized folders**: add files under `Dreamsign/` or `Drea
 ## Docs
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) covers the verified AlarmKit constraints, the alarm-chain design, project structure, data model and validator rules.
+- [`docs/INSTALL_WINDOWS.md`](docs/INSTALL_WINDOWS.md) explains how to install from a Windows PC with Sideloadly, and how to move to TestFlight with a paid account.
 - [`docs/DEVICE_TESTING.md`](docs/DEVICE_TESTING.md) is the step-by-step checklist for what only a real iPhone can verify.
 - [`docs/RESEARCH.md`](docs/RESEARCH.md) explains which studies shaped which design decisions.
 
