@@ -1,15 +1,13 @@
 # Installing Dreamsign from a Windows PC
 
-You don't need a Mac. GitHub's Mac servers build the app for you on every push. **Sideloadly** on Windows signs that build with your Apple ID and installs it on your iPhone over USB.
+You don't need a Mac. GitHub's Mac servers build the app for you on every push. A sideloading tool on Windows (**iLoader**, or **Sideloadly** as a backup) signs that build with your Apple ID and installs it on your iPhone over USB.
 
 ## One-time setup
 
-1. **iTunes and iCloud for Windows.** Install them from Apple's website, **not** the Microsoft Store. Sideloadly needs the website versions for the USB drivers and sign-in.
-2. **Sideloadly** from [sideloadly.io](https://sideloadly.io). Its developer has confirmed iOS 27 support.
+1. **iTunes for Windows** from Apple's website, **not** the Microsoft Store. It provides the USB drivers. Sideloadly also wants iCloud for Windows from Apple's website.
+2. **iLoader** ([github.com/nab138/iloader](https://github.com/nab138/iloader)) if you already use it. **Sideloadly** ([sideloadly.io](https://sideloadly.io)) is the backup; its developer has confirmed iOS 27 support.
 3. On the iPhone: **Settings › Privacy & Security › Developer Mode** → On, then restart. Sideloaded apps won't open without it.
 4. Plug the iPhone into the PC and tap **Trust** on the phone.
-
-> **iLoader?** It's mainly an installer for SideStore. At the time of writing there's an open report of installs failing on iOS 27 ("provisioning profile is banned"), so use Sideloadly for now.
 
 ## Get the app
 
@@ -18,7 +16,13 @@ You don't need a Mac. GitHub's Mac servers build the app for you on every push. 
 
 Every push builds a fresh one. Artifacts are kept for 30 days.
 
-## Install
+## Install with iLoader
+
+Sign in with your Apple ID as you did before, choose to install another app / an IPA (not SideStore), and pick `Dreamsign.ipa`. Then do steps 4–5 below: trust your Apple ID on the phone, and allow alarms.
+
+> iLoader's tracker has open iOS 27 reports, notably apps that crash immediately at launch after an iLoader install while the same app installed another way works. If Dreamsign closes the instant you open it, reinstall it with Sideloadly.
+
+## Install with Sideloadly
 
 1. Open Sideloadly. Your iPhone shows in the device list.
 2. Drag `Dreamsign.ipa` onto the window.
@@ -29,7 +33,7 @@ Every push builds a fresh one. Artifacts are kept for 30 days.
 ## Keeping it running (free Apple ID)
 
 - **Builds signed with a free Apple ID expire after 7 days.** Once it expires the app won't open, and the **Wake Up** button can't open it either. Re-sign it every few days.
-- **To re-sign:** install the same `.ipa` again with the same Apple ID. It installs over the existing app, so your alarms and journal stay. In Sideloadly's advanced options you can turn on automatic refresh over Wi-Fi while the PC is on.
+- **To re-sign:** install the same `.ipa` again with the same Apple ID and the same tool. It installs over the existing app, so your alarms and journal stay. Sideloadly can also refresh automatically over Wi-Fi while the PC is on (advanced options).
 - **Limits:** a free Apple ID can have at most 3 sideloaded apps installed at once.
 
 ## When you have the paid developer account
@@ -43,5 +47,6 @@ What's needed: an App Store Connect API key (Issuer ID, Key ID and the `.p8` fil
 ## If something goes wrong
 
 - **"Unable to verify app" / it won't open:** trust your Apple ID under VPN & Device Management, and check that Developer Mode is on.
+- **It closes the instant it opens (after an iLoader install):** that's the open iOS 27 code-signing issue. Reinstall with Sideloadly.
 - **The app crashes:** go to **Settings › Privacy & Security › Analytics & Improvements › Analytics Data**, find entries starting with `Dreamsign`, and share them. They're the crash reports.
 - **Sideloadly can't see the phone:** reinstall iTunes from Apple's website (not the Microsoft Store), unlock the phone, and re-trust the PC.
