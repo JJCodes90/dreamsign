@@ -13,6 +13,10 @@ OUT="$2"
 BUNDLE_ID="com.jjcodes.dreamsign"
 mkdir -p "$OUT"
 
+# macOS has no `timeout`; perl's alarm does the job. Kills a simctl call that hangs.
+limit() { local seconds="$1"; shift; perl -e 'alarm shift; exec @ARGV' "$seconds" "$@"; }
+log() { echo "[$(date +%H:%M:%S)] $*"; }
+
 SCREENS="alarms journal insights learn lesson reality ssild nightstand onboarding alarm-editor wbtb entry settings wake-shake wake-journal wake-math wake-complete mild sleep"
 
 runtime_for() { # device name → newest runtime identifier that offers it
@@ -34,30 +38,33 @@ capture_device() { # device-name prefix displays...
   runtime=$(runtime_for "$device")
   if [ -z "$runtime" ]; then echo "no runtime for $device"; return; fi
   udid=$(xcrun simctl create "Shots $prefix" "$device" "$runtime")
+  log "booting $device ($runtime)"
   xcrun simctl boot "$udid"
-  xcrun simctl bootstatus "$udid" -b >/dev/null
+  limit 600 xcrun simctl bootstatus "$udid" -b >/dev/null || log "bootstatus timed out"
+  log "booted"
   xcrun simctl ui "$udid" appearance dark || true
   xcrun simctl status_bar "$udid" override --time "6:41" --batteryState charged --batteryLevel 100 \
     --wifiBars 3 --cellularBars 4 >/dev/null 2>&1 || true
-  xcrun simctl install "$udid" "$APP"
+  limit 120 xcrun simctl install "$udid" "$APP" || log "install failed"
 
   for screen in $SCREENS; do
-    xcrun simctl launch --terminate-running-process "$udid" "$BUNDLE_ID" -showcase "$screen" >/dev/null
+    limit 60 xcrun simctl launch --terminate-running-process "$udid" "$BUNDLE_ID" -showcase "$screen" >/dev/null \
+      || log "launch failed: $screen"
     sleep 4
     if [ "$#" -eq 0 ]; then
-      xcrun simctl io "$udid" screenshot "$OUT/$prefix--$screen.png" >/dev/null 2>&1 \
-        && echo "captured $prefix / $screen" || echo "FAILED $prefix / $screen"
+      limit 30 xcrun simctl io "$udid" screenshot "$OUT/$prefix--$screen.png" >/dev/null 2>&1 \
+        && log "captured $prefix / $screen" || log "FAILED $prefix / $screen"
     else
       for display in "$@"; do
         local label="${display%%=*}" id="${display#*=}"
-        xcrun simctl io "$udid" screenshot --display="$id" "$OUT/$prefix-$label--$screen.png" >/dev/null 2>&1 \
-          && echo "captured $prefix-$label / $screen" || echo "FAILED $prefix-$label / $screen"
+        limit 30 xcrun simctl io "$udid" screenshot --display="$id" "$OUT/$prefix-$label--$screen.png" >/dev/null 2>&1 \
+          && log "captured $prefix-$label / $screen" || log "FAILED $prefix-$label / $screen"
       done
     fi
   done
 
-  xcrun simctl shutdown "$udid" >/dev/null 2>&1
-  xcrun simctl delete "$udid" >/dev/null 2>&1
+  limit 120 xcrun simctl shutdown "$udid" >/dev/null 2>&1
+  limit 120 xcrun simctl delete "$udid" >/dev/null 2>&1
 }
 
 # iPhone Duo: LCD is the cover display, LCD-1 the inner one. The app shows on whichever is active.
