@@ -20,7 +20,7 @@ def mostly_blank(path):
 
 
 shots = sys.argv[1]
-files = sorted(f for f in os.listdir(shots) if f.endswith(".png"))
+files = sorted(f for f in os.listdir(shots) if f.endswith(".png") and not f.startswith("blank--"))
 for f in list(files):
     if mostly_blank(os.path.join(shots, f)):
         os.remove(os.path.join(shots, f))
@@ -34,7 +34,7 @@ for f in files:
     if screen not in screens:
         screens.append(screen)
 
-lines = ["# Dreamsign screenshots", "", "Captured by CI with Xcode 27.1 (iPhone Duo cover + inner displays, and iPhone 17).", ""]
+lines = ["# Dreamsign screenshots", "", "Captured by CI with Xcode 27.1 on the iPhone Duo simulator (cover display).", ""]
 for screen in screens:
     lines += [f"## {screen}", "", "| " + " | ".join(devices) + " |", "|" + "---|" * len(devices)]
     cells = [f'<img src="{d}--{screen}.png" width="260">' if f"{d}--{screen}.png" in files else "—" for d in devices]

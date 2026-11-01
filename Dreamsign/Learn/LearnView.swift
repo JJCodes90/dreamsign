@@ -153,25 +153,34 @@ private struct PracticeGrid: View {
     private let items: [PracticeAction] = [.realityCheck, .mild, .ssild, .nightstand]
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-            ForEach(items) { item in
-                Button { onSelect(item) } label: {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Image(systemName: item.symbol)
-                            .font(.title3)
-                            .foregroundStyle(Palette.iris)
-                        Text(item.shortTitle)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Palette.text)
-                            .lineLimit(2)
-                            .multilineTextAlignment(.leading)
+        // A plain Grid: lazy grids inside List rows can send layout into a loop.
+        Grid(horizontalSpacing: 12, verticalSpacing: 12) {
+            ForEach(Array(stride(from: 0, to: items.count, by: 2)), id: \.self) { row in
+                GridRow {
+                    ForEach(items[row..<min(row + 2, items.count)]) { item in
+                        tile(item)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 74, alignment: .topLeading)
-                    .card(padding: 14)
                 }
-                .buttonStyle(.plain)
             }
         }
+    }
+
+    private func tile(_ item: PracticeAction) -> some View {
+            Button { onSelect(item) } label: {
+                VStack(alignment: .leading, spacing: 10) {
+                    Image(systemName: item.symbol)
+                        .font(.title3)
+                        .foregroundStyle(Palette.iris)
+                    Text(item.shortTitle)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Palette.text)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+                .frame(maxWidth: .infinity, minHeight: 74, alignment: .topLeading)
+                .card(padding: 14)
+            }
+            .buttonStyle(.plain)
     }
 }
 

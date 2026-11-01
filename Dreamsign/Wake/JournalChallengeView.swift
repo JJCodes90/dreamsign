@@ -16,7 +16,8 @@ struct JournalChallengeView: View {
     @State private var saved = false
     @FocusState private var focused: Bool
 
-    private let validator = JournalValidator.system()
+    /// Created after the first frame: loading the dictionaries can take a moment.
+    @State private var validator: JournalValidator?
     private var draftDefaultsKey: String { "journal-draft.\(draftKey)" }
 
     private var requirement: JournalRequirement {
@@ -37,6 +38,8 @@ struct JournalChallengeView: View {
         .sensoryFeedback(.success, trigger: assessment.isAcceptable) { _, acceptable in acceptable }
         .task(id: ValidationKey(text: text, noRecall: noRecall)) {
             guard (try? await Task.sleep(for: .milliseconds(150))) != nil else { return }
+            if validator == nil { validator = JournalValidator.system() }
+            guard let validator else { return }
             assessment = validator.assess(text, requirement: requirement)
             UserDefaults.standard.set(text, forKey: draftDefaultsKey)
         }

@@ -333,7 +333,7 @@ struct VividnessPicker: View {
     @Binding var value: Int
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 4) {
             ForEach(1...5, id: \.self) { level in
                 Button {
                     value = value == level ? 0 : level
@@ -341,8 +341,8 @@ struct VividnessPicker: View {
                     Circle()
                         .fill(level <= value ? Palette.iris : Palette.surfaceRaised)
                         .overlay(Circle().strokeBorder(Palette.iris.opacity(level <= value ? 0 : 0.35)))
-                        .frame(width: 30, height: 30)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 28, height: 28)
+                        .frame(width: 42, height: 44)
                         .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
@@ -350,7 +350,9 @@ struct VividnessPicker: View {
             Text(label)
                 .font(.subheadline)
                 .foregroundStyle(Palette.textSecondary)
-                .padding(.leading, 4)
+                .lineLimit(1)
+                .fixedSize()
+                .padding(.leading, 6)
         }
         .accessibilityElement()
         .accessibilityLabel("Vividness")
