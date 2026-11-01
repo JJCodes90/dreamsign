@@ -13,9 +13,12 @@ An alarm for deep sleepers that doubles as a lucid-dreaming practice. It keeps r
 |---|---|
 | **Alarms** | AlarmKit alarms that ring through Silent mode and Focus. Repeat days, label, sound, and ordered dismissal challenges. iOS always shows a Stop button, so each alarm pre-arms a **chain** of follow-up rings every 60 s. Only finishing the challenges in the app ends it. Rings switch to the loudest sound after 5 minutes. |
 | **Challenges** | **Shake** (CoreMotion, count target, progress ring) · **Math** (3 difficulties, N in a row, a wrong answer resets) · **Dream journal** (minimum distinct real words, with anti-mashing checks and a "can't remember → first thoughts" path; entries save automatically). |
-| **Lucid window (WBTB)** | A gentle alarm 4½–6 h after bedtime → quick journal → timed MILD rehearsal → a dim back-to-sleep screen. Includes "Going to bed now" for irregular nights. Audio hooks are stubbed (`SleepAudio`). |
-| **Journal** | Entries grouped by morning, search, detail and edit, lucid flag, and dream-sign tagging (people, places, themes). |
-| **Insights** | Recall streak, entries per week, top dream signs, lucid count, recall rate. |
+| **Lucid window (WBTB)** | A gentle alarm 4½–6 h after bedtime → quick journal → MILD or SSILD (voice-guided) → a dim back-to-sleep screen with sleep sounds. Includes "Going to bed now" for irregular nights. |
+| **Journal** | Entries grouped by morning, search, detail and edit. Lucid flag, vividness, mood, nightmare flag, the technique practiced that night, and dream-sign tagging (people, places, themes). |
+| **Insights** | Recall streak, entries per week, top dream signs, lucid count, recall rate, and lucid rate per technique ("What's working"). |
+| **Learn** | A 13-lesson lucid dreaming course with a cited source behind every claim: recall, dream signs, reality testing, MILD, WBTB, SSILD, staying lucid, nightmares, sleep paralysis, safety, and current research. |
+| **Practice** | An interactive reality-check trainer (with optional daytime reminders), guided SSILD and MILD sessions with on-device voice guidance, and a generated brown-noise soundscape for falling back asleep. |
+| **Nightstand** | A dim, warm bedside clock with bedtime controls. On iPhone Duo standing like a laptop, the clock sits above the fold and the controls below. |
 
 ## iPhone Duo
 
@@ -46,7 +49,8 @@ The project uses **synchronized folders**: add files under `Dreamsign/` or `Drea
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) covers the verified AlarmKit constraints, the alarm-chain design, project structure, data model and validator rules.
 - [`docs/INSTALL_WINDOWS.md`](docs/INSTALL_WINDOWS.md) explains how to install from a Windows PC with iLoader or Sideloadly, and how to move to TestFlight with a paid account.
 - [`docs/DEVICE_TESTING.md`](docs/DEVICE_TESTING.md) is the step-by-step checklist for what only a real iPhone can verify.
-- [`docs/RESEARCH.md`](docs/RESEARCH.md) explains which studies shaped which design decisions.
+- [`docs/RESEARCH.md`](docs/RESEARCH.md) explains which studies shaped which design decisions. The in-app course cites its sources lesson by lesson (`Dreamsign/Learn/Course.swift`).
+- **Screenshots:** CI captures every screen on the iPhone Duo (cover and inner displays) and iPhone 17, and publishes them to the [`ci-screenshots`](../../tree/ci-screenshots) branch. Run any screen yourself with the launch argument `-showcase <screen>`.
 
 ## Layout
 
