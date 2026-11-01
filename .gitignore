@@ -1,0 +1,19 @@
+# Xcode
+DerivedData/
+build/
+*.xcresult
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# macOS
+.DS_Store
+
+# Tooling
+__pycache__/
+*.pyc
