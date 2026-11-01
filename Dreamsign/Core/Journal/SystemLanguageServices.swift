@@ -33,10 +33,10 @@ struct NaturalLanguageTokenizer: WordTokenizing {
             .map(NLLanguage.init(rawValue:)) ?? .english
         let recognizer = NLLanguageRecognizer()
         recognizer.processString(text)
-        guard let (language, confidence) = recognizer.languageHypotheses(withMaximum: 1).first,
-              confidence >= 0.6, text.count >= 24
+        guard let best = recognizer.languageHypotheses(withMaximum: 1).first,
+              best.value >= 0.6, text.count >= 24
         else { return fallback }
-        return language
+        return best.key
     }
 }
 
