@@ -3,13 +3,12 @@ import SwiftUI
 /// Layout decisions for iPhone Duo (and every other size): stack when tall, split when wide,
 /// and when the device is partially folded, keep each part on its own side of the fold.
 ///
-/// The fold is a *division* reserved region (iOS 27.1+). Earlier systems never report one, so
+/// The fold is a *division* reserved region. Devices without a hinge never report one, so
 /// everything here degrades to plain size-based layout.
 enum FoldGeometry {
     /// The active fold within the proxy's bounds. Its frame already includes the system's
     /// recommended margins.
     static func activeFold(in proxy: GeometryProxy) -> CGRect? {
-        guard #available(iOS 27.1, *) else { return nil }
         guard let region = proxy.reservedRegions(kind: .division).first(where: \.isActive) else { return nil }
         let fold = region.frame.intersection(CGRect(origin: .zero, size: proxy.size))
         guard !fold.isNull, fold.width > 0 || fold.height > 0 else { return nil }
@@ -40,7 +39,7 @@ enum FoldGeometry {
 ///
 /// - Tall and unfolded (outer display, regular iPhones): `stacked`, sized naturally.
 /// - Wide (inner display open, landscape): side by side.
-/// - Partially folded: Apple's `ArrangementView` puts each part on its own side of the fold —
+/// - Wide, or partially folded: Apple's `ArrangementView` puts each part on its own side —
 ///   left/right like a book, or top/bottom like a laptop.
 struct FoldAwareSplit<Primary: View, Secondary: View, Stacked: View>: View {
     var minimumSideWidth: CGFloat
@@ -71,21 +70,13 @@ struct FoldAwareSplit<Primary: View, Secondary: View, Stacked: View>: View {
         }
     }
 
-    @ViewBuilder
     private var split: some View {
-        if #available(iOS 27.1, *) {
-            ArrangementView {
-                primary
-            } secondary: {
-                secondary
-            }
-            .arrangementViewStyle(.split)
-        } else {
-            HStack(spacing: 0) {
-                primary.frame(maxWidth: .infinity, maxHeight: .infinity)
-                secondary.frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
+        ArrangementView {
+            primary
+        } secondary: {
+            secondary
         }
+        .arrangementViewStyle(.split)
     }
 }
 
@@ -148,9 +139,6 @@ extension View {
 }
 
 extension ToolbarItemPlacement {
-    /// Save / Done. On iPhone Duo (iOS 27+) it's pinned at the top of the vertical side bar.
-    static var prominentConfirm: ToolbarItemPlacement {
-        if #available(iOS 27.0, *) { return .topBarPinnedTrailing }
-        return .confirmationAction
-    }
+    /// Save / Done — pinned at the top of iPhone Duo's vertical side bar.
+    static var prominentConfirm: ToolbarItemPlacement { .topBarPinnedTrailing }
 }

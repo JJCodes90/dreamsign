@@ -122,15 +122,8 @@ final class AlarmKitClient {
         let buttonText: LocalizedStringResource = kind == .wbtb ? "Begin" : "Wake Up"
         let open = AlarmButton(text: buttonText, textColor: .white,
                                systemImageName: kind == .wbtb ? "moon.stars.fill" : "sun.horizon.fill")
-        let alert: AlarmPresentation.Alert
-        if #available(iOS 26.1, *) {
-            alert = AlarmPresentation.Alert(title: title, secondaryButton: open, secondaryButtonBehavior: .custom)
-        } else {
-            alert = AlarmPresentation.Alert(title: title,
-                                            stopButton: AlarmButton(text: "Stop", textColor: .white, systemImageName: "stop.fill"),
-                                            secondaryButton: open,
-                                            secondaryButtonBehavior: .custom)
-        }
+        // The system supplies the Stop control; it can't be hidden (hence the ring chain).
+        let alert = AlarmPresentation.Alert(title: title, secondaryButton: open, secondaryButtonBehavior: .custom)
         let attributes = AlarmAttributes(presentation: AlarmPresentation(alert: alert), metadata: metadata,
                                          tintColor: Palette.iris)
         return .alarm(schedule: schedule,

@@ -1,12 +1,14 @@
 # Testing on a physical iPhone
 
-Unit tests cover the logic: scheduling, the chain planner, the journal validator, math, shake counting and stats. Run them with **⌘U** on any iOS 26 simulator. Everything below needs a real iPhone: alarms breaking through Silent/Focus, the lock-screen alert, motion and volume.
+Unit tests cover the logic: scheduling, the chain planner, the journal validator, math, shake counting and stats. Run them with **⌘U** on the iPhone Duo simulator (or any iOS 27.1 simulator). Everything below needs a real iPhone: alarms breaking through Silent/Focus, the lock-screen alert, motion and volume.
 
 ## Setup (once)
 
 1. Open `Dreamsign.xcodeproj` in **Xcode 27.1** or later. It's required for iPhone Duo's full-screen layout and fold APIs, and to install on iOS 27.1.
-2. Select the **Dreamsign** target, then **Signing & Capabilities**. Pick your Team. A free Apple ID works for personal use, but its builds expire after 7 days. If the bundle ID `com.jjcodes.dreamsign` is taken, change it to your own reverse-DNS ID.
-3. On the iPhone (iOS 26+), turn on **Settings › Privacy & Security › Developer Mode** and restart.
+2. Select the **Dreamsign** target, then **Signing & Capabilities**. Pick your Team. If the bundle ID `com.jjcodes.dreamsign` is taken, change it to your own reverse-DNS ID.
+   - **Free Apple ID:** AlarmKit needs no special entitlement, so everything works. Builds expire after 7 days; re-run from Xcode to renew.
+   - **Switching to a paid account:** iOS may refuse to install over a build signed by a different team. Deleting the app deletes its journal, so until you switch, treat entries as test data.
+3. On the iPhone (iOS 27.1+), turn on **Settings › Privacy & Security › Developer Mode** and restart.
 4. Plug in the iPhone, choose it as the run destination, and press **⌘R**. The first launch asks you to trust the developer: go to **Settings › General › VPN & Device Management**.
 5. Turn **Settings › Sounds & Haptics › Ringer and Alerts** up high. AlarmKit alarms use the ringer volume, not media volume.
 

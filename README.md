@@ -3,7 +3,7 @@
 An alarm for deep sleepers that doubles as a lucid-dreaming practice. It keeps ringing until you've proven you're awake. It catches your dream before it fades, and it guides wake-back-to-bed + MILD.
 
 - **No accounts, ads, analytics or network. Everything stays on the iPhone.**
-- Runs on iOS 26+ (iPhone). **Build with Xcode 27.1+**, which iPhone Duo's full-screen layout and fold APIs need.
+- **iOS 27.1+** (iPhone). Build with **Xcode 27.1+**.
 - Swift, SwiftUI, SwiftData, AlarmKit, CoreMotion, NaturalLanguage, Swift Charts.
 - **Full iPhone Duo support**: closed, open, rotated, and folded like a book or a laptop (see below).
 

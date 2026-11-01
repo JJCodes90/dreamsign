@@ -2,7 +2,7 @@
 
 Personal-first iOS alarm + lucid dreaming app. Everything stays on device: no accounts, analytics, network or ads.
 
-- **Platform:** iOS 26.0+, iPhone, including full iPhone Duo support. Dark only. Built with Xcode 27.1+.
+- **Platform:** iOS 27.1+, iPhone, including full iPhone Duo support. Dark only. Built with Xcode 27.1+.
 - **Stack:** Swift, SwiftUI, SwiftData, AlarmKit, CoreMotion, NaturalLanguage, Swift Charts, Swift Testing
 
 ---
@@ -16,7 +16,7 @@ Checked against Apple's AlarmKit reference, the *Scheduling an alarm with AlarmK
 | Info.plist | `NSAlarmKitUsageDescription` is required. If it's missing or empty, the app can't schedule alarms. | Set in `Dreamsign/Info.plist`. |
 | Authorization | `AlarmManager.shared.requestAuthorization()` returns `.authorized`, `.denied` or `.notDetermined`. If the app never asks, the system asks when the first alarm is scheduled. `authorizationUpdates` streams changes, and people can revoke it in Settings. | We ask during onboarding. The Alarms tab shows a banner with a Settings deep link when access is denied. |
 | Silent / Focus | Alarms break through silent mode and the current Focus. They're also forwarded to a paired Apple Watch and show in StandBy. | No extra entitlement needed. |
-| **Stop button** | "The system provides a stop button automatically." `init(title:stopButton:…)` is deprecated, and `init(title:secondaryButton:secondaryButtonBehavior:)` (iOS 26.1+) has no stop parameter. **The stop button can't be hidden.** | We need an alarm chain (§2). On iOS 26.0 we fall back to the deprecated initializer. |
+| **Stop button** | "The system provides a stop button automatically." `init(title:stopButton:…)` is deprecated, and `init(title:secondaryButton:secondaryButtonBehavior:)` (iOS 26.1+) has no stop parameter. **The stop button can't be hidden.** | We need an alarm chain (§2). |
 | Secondary button | `.custom` behavior runs a `LiveActivityIntent`. An intent with `supportedModes = .foreground` opens the app. It's only available after first unlock. | The **Wake Up** button opens the app straight into the challenges. |
 | Stop intent | `stopIntent` runs when Stop is tapped. The intent runs in the app's process, which is launched in the background if needed. | It quiets sibling rings and re-arms the chain. It never cancels it. |
 | Widget extension | It's required only for countdown or paused presentations ("…the system may unexpectedly dismiss alarms and fail to alert"). The system draws the alerting UI itself. | We don't use countdown or snooze, so there's **no widget extension** in the MVP. If snooze is ever added, a Live Activity has to come with it. |
@@ -125,9 +125,9 @@ Non-SwiftData state, `ChainState` (JSON in UserDefaults): an alarm-spec snapshot
 
 Layouts are driven by the space a view has, never by device idiom or orientation. Apple: *"the inner display doesn't honor your supported interface orientations."*
 
-- **`FoldAwareSplit`** (`DesignSystem/FoldAware.swift`) handles any screen with a "look at" part and a "tap" part. Tall and unfolded, it shows a natural stacked layout. Wide, or folded, it uses `ArrangementView` with the `.split` style (iOS 27.1). That puts the parts side by side when the device is folded like a book and top/bottom when it's folded like a laptop, each clear of the crease. Before iOS 27.1, it falls back to a size-based `HStack`.
+- **`FoldAwareSplit`** (`DesignSystem/FoldAware.swift`) handles any screen with a "look at" part and a "tap" part. Tall and unfolded, it shows a natural stacked layout. Wide, or folded, it uses `ArrangementView` with the `.split` style. That puts the parts side by side when the device is folded like a book and top/bottom when it's folded like a laptop, each clear of the crease.
 - **`FoldAvoiding`** applies Apple's displacement pattern to single-block screens. It reads the active *division* reserved region (`GeometryProxy.reservedRegions(kind: .division)`) and moves the content to one side. In book pose that's trailing, where content continues when the device closes. In laptop pose it's top or bottom, by purpose.
-- **Bars.** Every toolbar item has an icon and a title (`Label`, or `Button(role: .cancel / .confirm / .close)`), so the system can move it into the Duo's vertical side bar. Confirm actions use `.topBarPinnedTrailing` on iOS 27.
+- **Bars.** Every toolbar item has an icon and a title (`Label`, or `Button(role: .cancel / .confirm / .close)`), so the system can move it into the Duo's vertical side bar. Confirm actions use `.topBarPinnedTrailing`.
 - **Containers.** Journal uses `NavigationSplitView`, and the tab view uses system tabs. Both adapt to every pose automatically.
 
 ## 6. Journal anti-spam validator
