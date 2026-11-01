@@ -6,7 +6,7 @@ struct JournalView: View {
     @Environment(\.modelContext) private var context
     @State private var search = ""
     @State private var composing = false
-    @State private var path = NavigationPath()
+    @State private var selection: DreamEntry?
 
     /// Optional filter when opened from Insights.
     var sign: DreamSign?
@@ -34,66 +34,100 @@ struct JournalView: View {
 
     var body: some View {
         if sign != nil {
-            content
+            // Pushed from Insights, inside its navigation stack.
+            decorated(List { rows })
+                .navigationDestination(for: DreamEntry.self) { JournalEntryView(entry: $0) }
         } else {
-            NavigationStack(path: $path) { content }
+            // A stack when closed; list and entry side by side on the open inner display.
+            NavigationSplitView {
+                decorated(List(selection: $selection) { rows })
+                    .navigationSplitViewColumnWidth(min: 300, ideal: 360, max: 440)
+            } detail: {
+                if let selection {
+                    JournalEntryView(entry: selection, onDelete: { self.selection = nil })
+                        .id(selection.id)
+                } else {
+                    JournalPlaceholder(isEmpty: entries.isEmpty)
+                }
+            }
+            .navigationSplitViewStyle(.balanced)
         }
     }
 
-    private var content: some View {
-        List {
-            if entries.isEmpty {
-                EmptyJournal { composing = true }
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-            } else if filtered.isEmpty {
-                ContentUnavailableView.search(text: search)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-            }
-            ForEach(sections) { section in
-                Section {
-                    ForEach(section.entries) { entry in
-                        NavigationLink(value: entry) {
-                            JournalRow(entry: entry)
-                        }
-                        .listRowBackground(Color.clear)
-                        .listRowSeparatorTint(Palette.hairline)
-                        .swipeActions {
-                            Button(role: .destructive) { delete(entry) } label: { Label("Delete", systemImage: "trash") }
-                        }
+    @ViewBuilder
+    private var rows: some View {
+        if entries.isEmpty {
+            EmptyJournal { composing = true }
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+        } else if filtered.isEmpty {
+            ContentUnavailableView.search(text: search)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+        }
+        ForEach(sections) { section in
+            Section {
+                ForEach(section.entries) { entry in
+                    NavigationLink(value: entry) {
+                        JournalRow(entry: entry)
                     }
-                } header: {
-                    Text(MorningLabel.text(for: section.morning))
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Palette.textTertiary)
-                        .textCase(nil)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparatorTint(Palette.hairline)
+                    .swipeActions {
+                        Button(role: .destructive) { delete(entry) } label: { Label("Delete", systemImage: "trash") }
+                    }
                 }
+            } header: {
+                Text(MorningLabel.text(for: section.morning))
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Palette.textTertiary)
+                    .textCase(nil)
             }
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(NightBackground())
-        .navigationTitle(sign?.name ?? String(localized: "Journal"))
-        .navigationDestination(for: DreamEntry.self) { JournalEntryView(entry: $0) }
-        .searchable(text: $search, prompt: "Dreams, people, places")
-        .toolbar {
-            if sign == nil {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button { composing = true } label: { Image(systemName: "square.and.pencil") }
-                        .accessibilityLabel("New entry")
+    }
+
+    private func decorated(_ list: some View) -> some View {
+        list
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(NightBackground())
+            .navigationTitle(sign?.name ?? String(localized: "Journal"))
+            .searchable(text: $search, prompt: "Dreams, people, places")
+            .toolbar {
+                if sign == nil {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button { composing = true } label: { Label("New Entry", systemImage: "square.and.pencil") }
+                    }
                 }
             }
-        }
-        .sheet(isPresented: $composing) {
-            EntryEditorView(entry: nil)
-        }
+            .sheet(isPresented: $composing) {
+                EntryEditorView(entry: nil)
+            }
     }
 
     private func delete(_ entry: DreamEntry) {
+        if selection == entry { selection = nil }
         withAnimation {
             context.delete(entry)
             try? context.save()
+        }
+    }
+}
+
+private struct JournalPlaceholder: View {
+    let isEmpty: Bool
+
+    var body: some View {
+        ZStack {
+            NightBackground()
+            VStack(spacing: 12) {
+                Image(systemName: "moon.stars")
+                    .font(.system(size: 40, weight: .light))
+                    .foregroundStyle(Palette.iris)
+                Text(isEmpty ? "Your first dream will show up here" : "Choose a dream")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(Palette.textSecondary)
+            }
         }
     }
 }

@@ -146,3 +146,11 @@ extension View {
         frame(maxWidth: maxWidth).frame(maxWidth: .infinity)
     }
 }
+
+extension ToolbarItemPlacement {
+    /// Save / Done. On iPhone Duo (iOS 27+) it's pinned at the top of the vertical side bar.
+    static var prominentConfirm: ToolbarItemPlacement {
+        if #available(iOS 27.0, *) { return .topBarPinnedTrailing }
+        return .confirmationAction
+    }
+}

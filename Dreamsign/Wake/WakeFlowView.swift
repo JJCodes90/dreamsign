@@ -177,15 +177,20 @@ private struct ConfirmAwakeView: View {
     var onConfirm: () -> Void
 
     var body: some View {
-        VStack(spacing: 24) {
-            ChallengeHeader(title: "Are you up?", subtitle: "Sit up, feet on the floor.")
-            Spacer()
-            Image(systemName: "sun.horizon.fill")
-                .font(.system(size: 90, weight: .light))
-                .foregroundStyle(LinearGradient(colors: [Palette.dawn, Palette.dawnDeep], startPoint: .top, endPoint: .bottom))
-            Spacer()
+        FoldAwareSplit {
+            VStack(spacing: 24) {
+                ChallengeHeader(title: "Are you up?", subtitle: "Sit up, feet on the floor.")
+                Spacer(minLength: 8)
+                Image(systemName: "sun.horizon.fill")
+                    .font(.system(size: 90, weight: .light))
+                    .foregroundStyle(LinearGradient(colors: [Palette.dawn, Palette.dawnDeep], startPoint: .top, endPoint: .bottom))
+                Spacer(minLength: 8)
+            }
+        } secondary: {
             Button("I'm up", action: onConfirm)
                 .buttonStyle(.big)
+                .readableWidth(420)
+                .frame(maxHeight: .infinity, alignment: .bottom)
         }
     }
 }

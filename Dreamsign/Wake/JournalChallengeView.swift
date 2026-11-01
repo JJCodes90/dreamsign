@@ -25,12 +25,37 @@ struct JournalChallengeView: View {
             : JournalRequirement(minimumWords: minimumWords)
     }
 
+    /// While typing, drop the subtitle so the short Duo outer display (or landscape) keeps room to write.
+    private var compactHeader: Bool { focused && !text.isEmpty }
+
     var body: some View {
+        // Laptop pose: the writing sits on the upper half, the keyboard on the lower.
+        FoldAvoiding(tabletop: .top) {
+            content
+                .readableWidth()
+        }
+        .sensoryFeedback(.success, trigger: assessment.isAcceptable) { _, acceptable in acceptable }
+        .task(id: ValidationKey(text: text, noRecall: noRecall)) {
+            guard (try? await Task.sleep(for: .milliseconds(150))) != nil else { return }
+            assessment = validator.assess(text, requirement: requirement)
+            UserDefaults.standard.set(text, forKey: draftDefaultsKey)
+        }
+        .onChange(of: text) { onActivity() }
+        .onAppear {
+            if text.isEmpty, let draft = UserDefaults.standard.string(forKey: draftDefaultsKey) { text = draft }
+            assessment = JournalAssessment(requiredWords: requirement.minimumWords)
+            focused = true
+        }
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 16) {
             if noRecall {
-                ChallengeHeader(title: "First thoughts?", subtitle: "Feelings, fragments, whatever's there.")
+                ChallengeHeader(title: "First thoughts?",
+                                subtitle: compactHeader ? nil : "Feelings, fragments, whatever's there.")
             } else {
-                ChallengeHeader(title: "What did you dream?", subtitle: "Where were you? Who was there? How did it feel?")
+                ChallengeHeader(title: "What did you dream?",
+                                subtitle: compactHeader ? nil : "Where were you? Who was there? How did it feel?")
             }
 
             ZStack(alignment: .topLeading) {
@@ -85,18 +110,7 @@ struct JournalChallengeView: View {
                     .disabled(!assessment.isAcceptable || saved)
             }
         }
-        .sensoryFeedback(.success, trigger: assessment.isAcceptable) { _, acceptable in acceptable }
-        .task(id: ValidationKey(text: text, noRecall: noRecall)) {
-            guard (try? await Task.sleep(for: .milliseconds(150))) != nil else { return }
-            assessment = validator.assess(text, requirement: requirement)
-            UserDefaults.standard.set(text, forKey: draftDefaultsKey)
-        }
-        .onChange(of: text) { onActivity() }
-        .onAppear {
-            if text.isEmpty, let draft = UserDefaults.standard.string(forKey: draftDefaultsKey) { text = draft }
-            assessment = JournalAssessment(requiredWords: requirement.minimumWords)
-            focused = true
-        }
+        .animation(.easeOut(duration: 0.2), value: compactHeader)
     }
 
     private func save() {

@@ -137,14 +137,13 @@ struct AlarmEditorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", role: .cancel) { dismiss() }
+                    Button(role: .cancel) { dismiss() }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                ToolbarItem(placement: .prominentConfirm) {
+                    Button(role: .confirm) {
                         persist()
                         dismiss()
                     }
-                    .fontWeight(.semibold)
                 }
             }
             .confirmationDialog("Delete this alarm?", isPresented: $confirmDelete, titleVisibility: .visible) {

@@ -25,6 +25,23 @@ struct MathChallengeView: View {
     }
 
     var body: some View {
+        FoldAwareSplit {
+            problemPanel
+        } secondary: {
+            keypad
+                .frame(maxHeight: .infinity)
+        } stacked: {
+            VStack(spacing: 0) {
+                problemPanel
+                keypad
+            }
+        }
+        .sensoryFeedback(.error, trigger: wrong)
+        .sensoryFeedback(.success, trigger: right)
+        .sensoryFeedback(.selection, trigger: input)
+    }
+
+    private var problemPanel: some View {
         VStack(spacing: 0) {
             ChallengeHeader(title: target == 1 ? "Solve this" : "Solve \(target) in a row",
                             subtitle: "A wrong answer starts over.")
@@ -62,13 +79,14 @@ struct MathChallengeView: View {
             }
 
             Spacer(minLength: 12)
-
-            Keypad(onDigit: enter, onDelete: { if !input.isEmpty { input.removeLast() } })
-                .disabled(locked)
         }
-        .sensoryFeedback(.error, trigger: wrong)
-        .sensoryFeedback(.success, trigger: right)
-        .sensoryFeedback(.selection, trigger: input)
+    }
+
+    private var keypad: some View {
+        Keypad(onDigit: enter, onDelete: { if !input.isEmpty { input.removeLast() } })
+            .disabled(locked)
+            .frame(maxWidth: 440)
+            .padding(.bottom, 4)
     }
 
     private func enter(_ digit: Int) {
@@ -102,7 +120,7 @@ struct MathChallengeView: View {
     }
 }
 
-/// Big, glassy number pad. Each key is a 72 pt target.
+/// Big, glassy number pad. Keys are 72 pt tall when there's room, never under 54 pt.
 struct Keypad: View {
     var onDigit: (Int) -> Void
     var onDelete: () -> Void
@@ -119,7 +137,7 @@ struct Keypad: View {
                 }
             }
             GridRow {
-                Color.clear.frame(height: 72)
+                Color.clear.frame(minHeight: 54, maxHeight: 72)
                 key(Text("0")) { onDigit(0) }
                 key(Image(systemName: "delete.left")) { onDelete() }
                     .accessibilityLabel("Delete")
@@ -132,7 +150,7 @@ struct Keypad: View {
             label
                 .font(.clock(32, weight: .medium))
                 .foregroundStyle(Palette.text)
-                .frame(maxWidth: .infinity, minHeight: 72)
+                .frame(maxWidth: .infinity, minHeight: 54, maxHeight: 72)
                 .contentShape(.rect(cornerRadius: 22))
         }
         .buttonStyle(.plain)

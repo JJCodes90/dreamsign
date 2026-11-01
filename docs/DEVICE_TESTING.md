@@ -4,7 +4,7 @@ Unit tests cover the logic: scheduling, the chain planner, the journal validator
 
 ## Setup (once)
 
-1. Open `Dreamsign.xcodeproj` in **Xcode 26** or later.
+1. Open `Dreamsign.xcodeproj` in **Xcode 27.1** or later. It's required for iPhone Duo's full-screen layout and fold APIs, and to install on iOS 27.1.
 2. Select the **Dreamsign** target, then **Signing & Capabilities**. Pick your Team. A free Apple ID works for personal use, but its builds expire after 7 days. If the bundle ID `com.jjcodes.dreamsign` is taken, change it to your own reverse-DNS ID.
 3. On the iPhone (iOS 26+), turn on **Settings › Privacy & Security › Developer Mode** and restart.
 4. Plug in the iPhone, choose it as the run destination, and press **⌘R**. The first launch asks you to trust the developer: go to **Settings › General › VPN & Device Management**.
@@ -85,6 +85,17 @@ AlarmKit's docs don't say this. One developer report claims custom sounds play *
 
 ---
 
+### 13. ⚑ iPhone Duo poses
+Before testing on the device, use the **iPhone Duo** simulator in Xcode 27.1's Device Hub (open, close, rotate, fold). Then on the device:
+- **Closed**: every screen fits the outer display with nothing clipped. The Alarms, Journal and Insights toolbars sit in the side bar with icons. Editor sheets show vertical ✕ / ✓.
+- **Open, flat**: Alarms shows two columns (overview | alarms) and Insights two columns. Journal shows the list beside the selected entry. Delete an entry from the detail and the selection clears with no crash.
+- **Wake flow, open**: Math shows the problem beside the keypad. MILD shows the orb beside the cue.
+- **Book fold** (partially open, held like a book): no button or key sits in the crease. Single screens (Shake, Back to sleep) move to the right half.
+- **Laptop fold** (inner display facing you, bottom half on the table): Math puts the problem on top and the keypad on the bottom half. While journaling, the text is above the fold and the keyboard below. Shake's ring is on top.
+- **Fold or unfold mid-challenge**: progress isn't lost, nothing restarts, and no extra ring fires.
+- **Tent / landscape** on the nightstand: the alarm alert and the wake flow both work.
+- **Note** any pose where something lands in the crease or gets cut off.
+
 ## Simulator notes
 
 - The Shake challenge shows a **Count a shake** button on the simulator.
@@ -93,4 +104,4 @@ AlarmKit's docs don't say this. One developer report claims custom sounds play *
 
 ## Reporting back
 
-Send me the results for **3, 4, 5 and 9**, plus anything that looked off. These decide the default sound, the ring interval and the shake threshold.
+Send me the results for **3, 4, 5, 9 and 13**, plus anything that looked off. These decide the default sound, the ring interval and the shake threshold.

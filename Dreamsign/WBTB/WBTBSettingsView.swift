@@ -113,13 +113,12 @@ struct WBTBSettingsView: View {
             .navigationTitle("Lucid Window")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel", role: .cancel) { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                ToolbarItem(placement: .cancellationAction) { Button(role: .cancel) { dismiss() } }
+                ToolbarItem(placement: .prominentConfirm) {
+                    Button(role: .confirm) {
                         apply()
                         dismiss()
                     }
-                    .fontWeight(.semibold)
                 }
             }
         }

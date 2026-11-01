@@ -14,28 +14,51 @@ struct InsightsView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            Group {
                 if entries.isEmpty {
-                    emptyState
+                    ScrollView { emptyState }
                 } else {
-                    VStack(spacing: 16) {
-                        StreakHero(current: JournalStats.recallStreak(facts, now: .now, calendar: calendar),
-                                   longest: JournalStats.longestRecallStreak(facts, calendar: calendar))
-                        HStack(spacing: 12) {
-                            StatTile(value: "\(entries.count)", label: String(localized: "Entries"))
-                            StatTile(value: "\(entries.filter(\.isLucid).count)", label: String(localized: "Lucid"))
-                            StatTile(value: recallRateText, label: String(localized: "Recall"))
+                    // One column when closed; two when open — streaks on one side, patterns on the other.
+                    FoldAwareSplit(minimumSideWidth: 320) {
+                        column { summaryCards }
+                    } secondary: {
+                        column { patternCards }
+                    } stacked: {
+                        column {
+                            summaryCards
+                            patternCards
                         }
-                        WeeklyChart(buckets: JournalStats.entriesPerWeek(entries.map(\.createdAt), weeks: 8,
-                                                                         now: .now, calendar: calendar))
-                        TopSigns(signs: signs)
                     }
-                    .padding(.horizontal, Metrics.gutter)
-                    .padding(.bottom, 24)
                 }
             }
             .background(NightBackground())
             .navigationTitle("Insights")
+        }
+    }
+
+    @ViewBuilder
+    private var summaryCards: some View {
+        StreakHero(current: JournalStats.recallStreak(facts, now: .now, calendar: calendar),
+                   longest: JournalStats.longestRecallStreak(facts, calendar: calendar))
+        HStack(spacing: 12) {
+            StatTile(value: "\(entries.count)", label: String(localized: "Entries"))
+            StatTile(value: "\(entries.filter(\.isLucid).count)", label: String(localized: "Lucid"))
+            StatTile(value: recallRateText, label: String(localized: "Recall"))
+        }
+    }
+
+    @ViewBuilder
+    private var patternCards: some View {
+        WeeklyChart(buckets: JournalStats.entriesPerWeek(entries.map(\.createdAt), weeks: 8,
+                                                         now: .now, calendar: calendar))
+        TopSigns(signs: signs)
+    }
+
+    private func column<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        ScrollView {
+            VStack(spacing: 16) { content() }
+                .padding(.horizontal, Metrics.gutter)
+                .padding(.bottom, 24)
         }
     }
 

@@ -2,7 +2,7 @@
 
 Personal-first iOS alarm + lucid dreaming app. Everything stays on device: no accounts, analytics, network or ads.
 
-- **Platform:** iOS 26.0+, iPhone, portrait, dark only
+- **Platform:** iOS 26.0+, iPhone, including full iPhone Duo support. Dark only. Built with Xcode 27.1+.
 - **Stack:** Swift, SwiftUI, SwiftData, AlarmKit, CoreMotion, NaturalLanguage, Swift Charts, Swift Testing
 
 ---
@@ -121,7 +121,16 @@ Non-SwiftData state, `ChainState` (JSON in UserDefaults): an alarm-spec snapshot
 
 ---
 
-## 5. Journal anti-spam validator
+## 5. Layout: iPhone Duo and every other size
+
+Layouts are driven by the space a view has, never by device idiom or orientation. Apple: *"the inner display doesn't honor your supported interface orientations."*
+
+- **`FoldAwareSplit`** (`DesignSystem/FoldAware.swift`) handles any screen with a "look at" part and a "tap" part. Tall and unfolded, it shows a natural stacked layout. Wide, or folded, it uses `ArrangementView` with the `.split` style (iOS 27.1). That puts the parts side by side when the device is folded like a book and top/bottom when it's folded like a laptop, each clear of the crease. Before iOS 27.1, it falls back to a size-based `HStack`.
+- **`FoldAvoiding`** applies Apple's displacement pattern to single-block screens. It reads the active *division* reserved region (`GeometryProxy.reservedRegions(kind: .division)`) and moves the content to one side. In book pose that's trailing, where content continues when the device closes. In laptop pose it's top or bottom, by purpose.
+- **Bars.** Every toolbar item has an icon and a title (`Label`, or `Button(role: .cancel / .confirm / .close)`), so the system can move it into the Duo's vertical side bar. Confirm actions use `.topBarPinnedTrailing` on iOS 27.
+- **Containers.** Journal uses `NavigationSplitView`, and the tab view uses system tabs. Both adapt to every pose automatically.
+
+## 6. Journal anti-spam validator
 
 The rules are pure and deterministic, with injected `Lexicon` and `WordTokenizer`:
 

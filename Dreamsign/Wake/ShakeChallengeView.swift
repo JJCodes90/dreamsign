@@ -68,38 +68,8 @@ struct ShakeChallengeView: View {
     private var progress: Double { Double(min(monitor.count, target)) / Double(max(target, 1)) }
 
     var body: some View {
-        VStack(spacing: 24) {
-            ChallengeHeader(title: "Shake it awake", subtitle: "Shake your phone, hard.")
-            Spacer()
-            ZStack {
-                ProgressRing(progress: progress, lineWidth: 18, tint: finished ? Palette.mint : Palette.dawn)
-                VStack(spacing: 0) {
-                    if finished {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 72, weight: .semibold))
-                            .foregroundStyle(Palette.mint)
-                            .transition(.scale.combined(with: .opacity))
-                    } else {
-                        Text("\(remaining)")
-                            .font(.clock(96, weight: .regular))
-                            .monospacedDigit()
-                            .contentTransition(.numericText(countsDown: true))
-                            .foregroundStyle(Palette.text)
-                        Text("to go")
-                            .font(.title3)
-                            .foregroundStyle(Palette.textSecondary)
-                    }
-                }
-            }
-            .frame(width: 270, height: 270)
-            .scaleEffect(bump ? 1.035 : 1)
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(finished ? Text("Done") : Text("\(remaining) shakes to go"))
-            Spacer()
-            if showsManualButton {
-                Button("Count a shake") { monitor.registerManualShake() }
-                    .buttonStyle(.quiet)
-            }
+        FoldAvoiding(tabletop: .top) {
+            content
         }
         .sensoryFeedback(.impact(weight: .light, intensity: 0.7), trigger: monitor.count)
         .sensoryFeedback(.success, trigger: finished)
@@ -117,6 +87,47 @@ struct ShakeChallengeView: View {
         }
         .onAppear { monitor.start() }
         .onDisappear { monitor.stop() }
+    }
+
+    private var content: some View {
+        VStack(spacing: 24) {
+            ChallengeHeader(title: "Shake it awake", subtitle: "Shake your phone, hard.")
+            Spacer(minLength: 8)
+            ZStack {
+                ProgressRing(progress: progress, lineWidth: 18, tint: finished ? Palette.mint : Palette.dawn)
+                VStack(spacing: 0) {
+                    if finished {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 72, weight: .semibold))
+                            .foregroundStyle(Palette.mint)
+                            .transition(.scale.combined(with: .opacity))
+                    } else {
+                        Text("\(remaining)")
+                            .font(.clock(96, weight: .regular))
+                            .monospacedDigit()
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                            .contentTransition(.numericText(countsDown: true))
+                            .foregroundStyle(Palette.text)
+                        Text("to go")
+                            .font(.title3)
+                            .foregroundStyle(Palette.textSecondary)
+                    }
+                }
+            }
+            .frame(maxWidth: 280, maxHeight: 280)
+            .aspectRatio(1, contentMode: .fit)
+            .padding(.horizontal, 12)
+            .scaleEffect(bump ? 1.035 : 1)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(finished ? Text("Done") : Text("\(remaining) shakes to go"))
+            Spacer(minLength: 8)
+            if showsManualButton {
+                Button("Count a shake") { monitor.registerManualShake() }
+                    .buttonStyle(.quiet)
+            }
+        }
+        .readableWidth()
     }
 
     private var showsManualButton: Bool {

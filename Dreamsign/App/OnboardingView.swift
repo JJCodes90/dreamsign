@@ -18,67 +18,95 @@ struct OnboardingView: View {
     var body: some View {
         ZStack {
             NightBackground()
-            VStack(spacing: 0) {
-                Spacer(minLength: 40)
-                Image(systemName: "moon.stars.fill")
-                    .font(.system(size: 64, weight: .light))
-                    .foregroundStyle(LinearGradient(colors: [Palette.text, Palette.iris], startPoint: .top, endPoint: .bottom))
-                    .shadow(color: Palette.iris.opacity(0.6), radius: 24)
-                    .padding(.bottom, 20)
-                Text("Dreamsign")
-                    .font(.system(size: 44, weight: .bold, design: .rounded))
-                    .foregroundStyle(Palette.text)
-                Text("Wake up. Remember. Become lucid.")
-                    .font(.title3)
-                    .foregroundStyle(Palette.textSecondary)
-                    .padding(.top, 6)
-
-                VStack(alignment: .leading, spacing: 26) {
-                    ForEach(Array(points.enumerated()), id: \.offset) { index, point in
-                        HStack(alignment: .top, spacing: 16) {
-                            Image(systemName: point.symbol)
-                                .font(.title2)
-                                .foregroundStyle(Palette.iris)
-                                .frame(width: 36)
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(point.title).font(.headline).foregroundStyle(Palette.text)
-                                Text(point.detail).font(.subheadline).foregroundStyle(Palette.textSecondary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                        }
-                        .opacity(appeared ? 1 : 0)
-                        .offset(y: appeared ? 0 : 12)
-                        .animation(.easeOut(duration: 0.6).delay(0.15 * Double(index) + 0.2), value: appeared)
+            FoldAwareSplit(minimumSideWidth: 320) {
+                brand
+                    .frame(maxHeight: .infinity)
+            } secondary: {
+                ScrollView {
+                    VStack(spacing: 32) {
+                        pointsList
+                        action
                     }
+                    .padding(.vertical, 24)
+                    .readableWidth(460)
                 }
-                .padding(.top, 44)
-                .padding(.horizontal, 8)
-
-                Spacer(minLength: 32)
-
-                Button {
-                    requesting = true
-                    Task {
-                        await model.coordinator.requestAuthorization()
-                        requesting = false
-                        onFinish()
+                .scrollBounceBehavior(.basedOnSize)
+            } stacked: {
+                ScrollView {
+                    VStack(spacing: 40) {
+                        brand
+                        pointsList
+                        action
                     }
-                } label: {
-                    if requesting { ProgressView().tint(Palette.ink) } else { Text("Allow alarms") }
+                    .padding(.vertical, 32)
+                    .readableWidth(520)
                 }
-                .buttonStyle(.big)
-                .disabled(requesting)
-
-                Text("Everything stays on this iPhone. No accounts, no tracking.")
-                    .font(.footnote)
-                    .foregroundStyle(Palette.textTertiary)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 14)
+                .scrollBounceBehavior(.basedOnSize)
             }
             .padding(.horizontal, 28)
-            .padding(.bottom, 12)
         }
         .onAppear { appeared = true }
+    }
+
+    private var brand: some View {
+        VStack(spacing: 6) {
+            Image(systemName: "moon.stars.fill")
+                .font(.system(size: 64, weight: .light))
+                .foregroundStyle(LinearGradient(colors: [Palette.text, Palette.iris], startPoint: .top, endPoint: .bottom))
+                .shadow(color: Palette.iris.opacity(0.6), radius: 24)
+                .padding(.bottom, 14)
+            Text("Dreamsign")
+                .font(.system(size: 44, weight: .bold, design: .rounded))
+                .foregroundStyle(Palette.text)
+            Text("Wake up. Remember. Become lucid.")
+                .font(.title3)
+                .foregroundStyle(Palette.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+    }
+
+    private var pointsList: some View {
+        VStack(alignment: .leading, spacing: 26) {
+            ForEach(Array(points.enumerated()), id: \.offset) { index, point in
+                HStack(alignment: .top, spacing: 16) {
+                    Image(systemName: point.symbol)
+                        .font(.title2)
+                        .foregroundStyle(Palette.iris)
+                        .frame(width: 36)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(point.title).font(.headline).foregroundStyle(Palette.text)
+                        Text(point.detail).font(.subheadline).foregroundStyle(Palette.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .opacity(appeared ? 1 : 0)
+                .offset(y: appeared ? 0 : 12)
+                .animation(.easeOut(duration: 0.6).delay(0.15 * Double(index) + 0.2), value: appeared)
+            }
+        }
+        .padding(.horizontal, 8)
+    }
+
+    private var action: some View {
+        VStack(spacing: 14) {
+            Button {
+                requesting = true
+                Task {
+                    await model.coordinator.requestAuthorization()
+                    requesting = false
+                    onFinish()
+                }
+            } label: {
+                if requesting { ProgressView().tint(Palette.ink) } else { Text("Allow alarms") }
+            }
+            .buttonStyle(.big)
+            .disabled(requesting)
+
+            Text("Everything stays on this iPhone. No accounts, no tracking.")
+                .font(.footnote)
+                .foregroundStyle(Palette.textTertiary)
+                .multilineTextAlignment(.center)
+        }
     }
 }
 

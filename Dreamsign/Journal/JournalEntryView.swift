@@ -3,6 +3,8 @@ import SwiftUI
 
 struct JournalEntryView: View {
     @Bindable var entry: DreamEntry
+    /// In a split view, clears the selection instead of popping.
+    var onDelete: (() -> Void)?
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @State private var editing = false
@@ -80,18 +82,18 @@ struct JournalEntryView: View {
                     Button { editing = true } label: { Label("Edit", systemImage: "pencil") }
                     Button(role: .destructive) { confirmDelete = true } label: { Label("Delete", systemImage: "trash") }
                 } label: {
-                    Image(systemName: "ellipsis")
+                    Label("More", systemImage: "ellipsis")
                 }
-                .accessibilityLabel("More")
             }
         }
         .sheet(isPresented: $editing) { EntryEditorView(entry: entry) }
         .sheet(isPresented: $tagging) { SignTaggerView(entry: entry) }
         .confirmationDialog("Delete this entry?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete", role: .destructive) {
-                context.delete(entry)
+                let doomed = entry
+                if let onDelete { onDelete() } else { dismiss() }
+                context.delete(doomed)
                 try? context.save()
-                dismiss()
             }
         }
     }
@@ -146,10 +148,9 @@ struct EntryEditorView: View {
             .navigationTitle(entry == nil ? "New Entry" : "Edit Entry")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel", role: .cancel) { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save", action: save)
-                        .fontWeight(.semibold)
+                ToolbarItem(placement: .cancellationAction) { Button(role: .cancel) { dismiss() } }
+                ToolbarItem(placement: .prominentConfirm) {
+                    Button(role: .confirm, action: save)
                         .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
@@ -229,7 +230,7 @@ struct SignTaggerView: View {
             .navigationTitle("Dream Signs")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+                ToolbarItem(placement: .prominentConfirm) { Button(role: .confirm) { dismiss() } }
             }
         }
         .sensoryFeedback(.selection, trigger: entry.signs.count)

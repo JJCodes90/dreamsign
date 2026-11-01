@@ -3,7 +3,9 @@
 An alarm for deep sleepers that doubles as a lucid-dreaming practice. It keeps ringing until you've proven you're awake. It catches your dream before it fades, and it guides wake-back-to-bed + MILD.
 
 - **No accounts, ads, analytics or network. Everything stays on the iPhone.**
-- iOS 26+, iPhone. Swift, SwiftUI, SwiftData, AlarmKit, CoreMotion, NaturalLanguage, Swift Charts.
+- Runs on iOS 26+ (iPhone). **Build with Xcode 27.1+**, which iPhone Duo's full-screen layout and fold APIs need.
+- Swift, SwiftUI, SwiftData, AlarmKit, CoreMotion, NaturalLanguage, Swift Charts.
+- **Full iPhone Duo support**: closed, open, rotated, and folded like a book or a laptop (see below).
 
 ## What's in the MVP
 
@@ -15,9 +17,21 @@ An alarm for deep sleepers that doubles as a lucid-dreaming practice. It keeps r
 | **Journal** | Entries grouped by morning, search, detail and edit, lucid flag, and dream-sign tagging (people, places, themes). |
 | **Insights** | Recall streak, entries per week, top dream signs, lucid count, recall rate. |
 
+## iPhone Duo
+
+| Pose | What Dreamsign does |
+|---|---|
+| **Closed** (outer display) | Compact layouts sized for the wider, shorter screen. Toolbar items carry an icon and a title, so the system can move them into the vertical side bar. |
+| **Open** (inner display) | Alarms and Insights become two columns. Journal becomes a split view (entries beside the open entry). The wake flow puts the problem beside the keypad, and the orb beside the MILD cue. |
+| **Folded like a book** | Each half of a screen sits on its own side of the crease, using `ArrangementView` and the fold's reserved region. Single-purpose screens move to the trailing side. |
+| **Folded like a laptop** (on a table) | Things to look at go on the top half, things to tap on the bottom: the keypad sits on the stable base. While journaling, the text stays above the fold and the keyboard sits below. |
+| **Rotated / tent** | Landscape is supported. The inner display ignores orientation locks, so every layout is size-driven, never orientation-driven. |
+
+Simulate every pose with the iPhone Duo simulator in Xcode 27.1's Device Hub.
+
 ## Getting started
 
-1. Open `Dreamsign.xcodeproj` in Xcode 26+.
+1. Open `Dreamsign.xcodeproj` in Xcode 27.1 or later.
 2. Set your Team under the **Dreamsign** target, in **Signing & Capabilities**. Change the bundle ID if needed.
 3. Run on an iPhone (⌘R). Run the tests on a simulator (⌘U).
 
@@ -51,7 +65,7 @@ scripts/          generate_icon.py, generate_sounds.py (reproducible assets)
 
 `DreamsignTests` (Swift Testing) covers the anti-spam journal validator (including the real on-device dictionaries), occurrence math across DST, the chain planner (budgeting, inference, stop/wake-up handling, deferral, completion, one-offs), math generation, shake detection and journal stats.
 
-`.github/workflows/ios.yml` builds and runs the tests on a macOS 26 runner for every push and pull request.
+`.github/workflows/ios.yml` builds and runs the tests with Xcode 27.1 on the **iPhone Duo simulator** (GitHub's `xcode-27` runner) for every push and pull request.
 
 ## Regenerating assets
 

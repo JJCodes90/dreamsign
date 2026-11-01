@@ -16,63 +16,30 @@ struct AlarmsView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Group {
-                    NextAlarmHeader(alarms: allAlarms.filter(\.isEnabled))
-                        .padding(.top, 4)
-                        .padding(.bottom, 8)
-
-                    if model.coordinator.authorization == .denied {
-                        PermissionBanner()
-                    }
-                    if model.coordinator.chainWasTruncated {
-                        Label("iOS limited how many follow-up rings could be scheduled. The soonest alarms are fully covered.",
-                              systemImage: "exclamationmark.triangle.fill")
-                            .font(.footnote)
-                            .foregroundStyle(Palette.dawn)
-                            .card(padding: 14, tint: Palette.dawn)
-                    }
-
-                    WBTBCard(plan: wbtb) { showingWBTB = true }
-
-                    if alarms.isEmpty {
-                        EmptyAlarms { editing = .new }
-                    } else {
-                        SectionHeader("Alarms").padding(.top, 10)
-                        ForEach(alarms) { alarm in
-                            AlarmCard(alarm: alarm) { toggled in
-                                alarm.isEnabled = toggled
-                                alarm.touch()
-                                save()
-                            }
-                            .contentShape(.rect(cornerRadius: Metrics.corner))
-                            .onTapGesture { editing = .existing(alarm) }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) { delete(alarm) } label: { Label("Delete", systemImage: "trash") }
-                            }
-                            .contextMenu {
-                                Button { editing = .existing(alarm) } label: { Label("Edit", systemImage: "pencil") }
-                                Button(role: .destructive) { delete(alarm) } label: { Label("Delete", systemImage: "trash") }
-                            }
-                        }
-                    }
+            // Closed (or any regular iPhone): one list. Open on iPhone Duo or in landscape:
+            // overview on one side, alarms on the other — and on either side of the fold.
+            FoldAwareSplit(minimumSideWidth: 320) {
+                ScrollView {
+                    VStack(spacing: 12) { overview }
+                        .padding(.horizontal, Metrics.gutter)
+                        .padding(.bottom, 24)
                 }
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 6, leading: Metrics.gutter, bottom: 6, trailing: Metrics.gutter))
+            } secondary: {
+                alarmList { alarmRows }
+            } stacked: {
+                alarmList {
+                    overview
+                    alarmRows
+                }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
             .background(NightBackground())
             .navigationTitle("Alarms")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button { showingSettings = true } label: { Image(systemName: "gearshape") }
-                        .accessibilityLabel("Settings")
+                    Button { showingSettings = true } label: { Label("Settings", systemImage: "gearshape") }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button { editing = .new } label: { Image(systemName: "plus") }
-                        .accessibilityLabel("Add alarm")
+                ToolbarItem(placement: .primaryAction) {
+                    Button { editing = .new } label: { Label("Add Alarm", systemImage: "plus") }
                 }
             }
             .sheet(item: $editing) { target in
@@ -85,6 +52,62 @@ struct AlarmsView: View {
                 SettingsView()
             }
         }
+    }
+
+    @ViewBuilder
+    private var overview: some View {
+        NextAlarmHeader(alarms: allAlarms.filter(\.isEnabled))
+            .padding(.top, 4)
+            .padding(.bottom, 8)
+
+        if model.coordinator.authorization == .denied {
+            PermissionBanner()
+        }
+        if model.coordinator.chainWasTruncated {
+            Label("iOS limited how many follow-up rings could be scheduled. The soonest alarms are fully covered.",
+                  systemImage: "exclamationmark.triangle.fill")
+                .font(.footnote)
+                .foregroundStyle(Palette.dawn)
+                .card(padding: 14, tint: Palette.dawn)
+        }
+
+        WBTBCard(plan: wbtb) { showingWBTB = true }
+    }
+
+    @ViewBuilder
+    private var alarmRows: some View {
+        if alarms.isEmpty {
+            EmptyAlarms { editing = .new }
+        } else {
+            SectionHeader("Alarms").padding(.top, 10)
+            ForEach(alarms) { alarm in
+                AlarmCard(alarm: alarm) { toggled in
+                    alarm.isEnabled = toggled
+                    alarm.touch()
+                    save()
+                }
+                .contentShape(.rect(cornerRadius: Metrics.corner))
+                .onTapGesture { editing = .existing(alarm) }
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) { delete(alarm) } label: { Label("Delete", systemImage: "trash") }
+                }
+                .contextMenu {
+                    Button { editing = .existing(alarm) } label: { Label("Edit", systemImage: "pencil") }
+                    Button(role: .destructive) { delete(alarm) } label: { Label("Delete", systemImage: "trash") }
+                }
+            }
+        }
+    }
+
+    private func alarmList<Rows: View>(@ViewBuilder _ rows: () -> Rows) -> some View {
+        List {
+            Group { rows() }
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 6, leading: Metrics.gutter, bottom: 6, trailing: Metrics.gutter))
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
 
     private func delete(_ alarm: WakeAlarm) {

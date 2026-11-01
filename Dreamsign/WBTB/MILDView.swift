@@ -21,33 +21,30 @@ struct MILDView: View {
             let phase = MILDPhase.allCases[Int(elapsed / Self.phaseLength) % MILDPhase.allCases.count]
             let remaining = max(total - elapsed, 0)
 
-            VStack(spacing: 22) {
-                Text(title(phase))
-                    .font(.caption.weight(.bold))
-                    .tracking(2.5)
-                    .foregroundStyle(Palette.iris)
-                    .padding(.top, 28)
-                    .contentTransition(.opacity)
-
-                Spacer(minLength: 8)
-
-                BreathingOrb(progress: min(elapsed / total, 1))
-                    .frame(width: 210, height: 210)
-
-                VStack(spacing: 14) {
-                    cue(phase)
+            FoldAwareSplit {
+                VStack(spacing: 22) {
+                    phaseTitle(phase)
+                    Spacer(minLength: 8)
+                    orb(elapsed)
+                    Spacer(minLength: 8)
                 }
-                .frame(maxWidth: .infinity, minHeight: 150, alignment: .top)
-                .multilineTextAlignment(.center)
-                .animation(.easeInOut(duration: 0.8), value: phase)
-
-                Spacer(minLength: 8)
-
-                Text(Duration.seconds(remaining).formatted(.time(pattern: .minuteSecond)))
-                    .font(.headline.monospacedDigit())
-                    .foregroundStyle(Palette.textTertiary)
-                Button("I'm ready to sleep", action: finish)
-                    .buttonStyle(.quiet)
+            } secondary: {
+                VStack(spacing: 22) {
+                    Spacer(minLength: 8)
+                    cue(phase)
+                    Spacer(minLength: 8)
+                    footer(remaining)
+                }
+                .readableWidth(460)
+            } stacked: {
+                VStack(spacing: 22) {
+                    phaseTitle(phase)
+                    Spacer(minLength: 8)
+                    orb(elapsed)
+                    cue(phase)
+                    Spacer(minLength: 8)
+                    footer(remaining)
+                }
             }
             .onChange(of: phase) { _, newPhase in SleepAudio.shared.mildPhaseChanged(to: newPhase) }
         }
@@ -55,6 +52,40 @@ struct MILDView: View {
             SleepAudio.shared.beginMILDGuidance()
             try? await Task.sleep(for: .seconds(total))
             if !Task.isCancelled { finish() }
+        }
+    }
+
+    private func phaseTitle(_ phase: MILDPhase) -> some View {
+        Text(title(phase))
+            .font(.caption.weight(.bold))
+            .tracking(2.5)
+            .foregroundStyle(Palette.iris)
+            .padding(.top, 28)
+            .contentTransition(.opacity)
+    }
+
+    private func orb(_ elapsed: TimeInterval) -> some View {
+        BreathingOrb(progress: min(elapsed / total, 1))
+            .frame(maxWidth: 210, maxHeight: 210)
+            .aspectRatio(1, contentMode: .fit)
+    }
+
+    private func cue(_ phase: MILDPhase) -> some View {
+        VStack(spacing: 14) {
+            cueText(phase)
+        }
+        .frame(maxWidth: .infinity, minHeight: 130, alignment: .top)
+        .multilineTextAlignment(.center)
+        .animation(.easeInOut(duration: 0.8), value: phase)
+    }
+
+    private func footer(_ remaining: TimeInterval) -> some View {
+        VStack(spacing: 12) {
+            Text(Duration.seconds(remaining).formatted(.time(pattern: .minuteSecond)))
+                .font(.headline.monospacedDigit())
+                .foregroundStyle(Palette.textTertiary)
+            Button("I'm ready to sleep", action: finish)
+                .buttonStyle(.quiet)
         }
     }
 
@@ -71,7 +102,7 @@ struct MILDView: View {
     }
 
     @ViewBuilder
-    private func cue(_ phase: MILDPhase) -> some View {
+    private func cueText(_ phase: MILDPhase) -> some View {
         switch phase {
         case .recall:
             Text("Replay the dream you just had, in as much detail as you can.")
@@ -127,22 +158,8 @@ struct BackToSleepView: View {
 
     var body: some View {
         ZStack {
-            VStack(spacing: 18) {
-                Spacer()
-                Image(systemName: "moon.zzz.fill")
-                    .font(.system(size: 56, weight: .light))
-                    .foregroundStyle(Palette.iris.opacity(0.75))
-                Text("Back to sleep")
-                    .font(.title.weight(.semibold))
-                    .foregroundStyle(Palette.text.opacity(0.85))
-                Text(MILDView.intention)
-                    .font(.body.italic())
-                    .foregroundStyle(Palette.textTertiary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-                Spacer()
-                Button("Done", action: onDone)
-                    .buttonStyle(.quiet)
+            FoldAvoiding(tabletop: .top) {
+                sleepContent
             }
             Color.black
                 .opacity(dimmed ? 0.7 : 0)
@@ -155,5 +172,26 @@ struct BackToSleepView: View {
             withAnimation(.easeInOut(duration: 10).delay(3)) { dimmed = true }
         }
         .onDisappear { SleepAudio.shared.stopAll() }
+    }
+
+    private var sleepContent: some View {
+        VStack(spacing: 18) {
+            Spacer()
+            Image(systemName: "moon.zzz.fill")
+                .font(.system(size: 56, weight: .light))
+                .foregroundStyle(Palette.iris.opacity(0.75))
+            Text("Back to sleep")
+                .font(.title.weight(.semibold))
+                .foregroundStyle(Palette.text.opacity(0.85))
+            Text(MILDView.intention)
+                .font(.body.italic())
+                .foregroundStyle(Palette.textTertiary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+            Spacer()
+            Button("Done", action: onDone)
+                .buttonStyle(.quiet)
+        }
+        .readableWidth(460)
     }
 }
