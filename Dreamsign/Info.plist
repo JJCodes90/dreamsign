@@ -4,6 +4,10 @@
 <dict>
 	<key>NSAlarmKitUsageDescription</key>
 	<string>Dreamsign wakes you with real alarms that ring through Silent mode and Focus, and keeps them coming until you're truly up.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Dreamsign counts your steps for the Walk wake-up challenge. Nothing leaves your iPhone.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Dreamsign scans the barcode or QR code you chose for the Scan wake-up challenge. Nothing is recorded.</string>
 	<key>UIUserInterfaceStyle</key>
 	<string>Dark</string>
 	<key>UILaunchScreen</key>

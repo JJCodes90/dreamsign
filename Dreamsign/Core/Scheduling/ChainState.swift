@@ -19,6 +19,8 @@ struct AlarmSpec: Codable, Hashable, Identifiable, Sendable {
     var isEnabled: Bool
     var revision: Int
     var modifiedAt: Date
+    /// Minutes before the alarm for a soft "gentle start" ring; nil or 0 = off.
+    var gentleMinutes: Int? = nil
 
     /// Changes whenever the scheduled primary alarm must be replaced.
     var fingerprint: String {
@@ -44,6 +46,12 @@ struct Occurrence: Codable, Hashable, Identifiable, Sendable {
     var isOneOff = false
     var isTest = false
     var completedAt: Date?
+    /// Soft ring before `fireDate` (gentle start). Never starts the wake flow by itself.
+    var gentle: ArmedRing?
+    /// Set on a wake-up check: the id of the occurrence it follows.
+    var checkOf: String?
+    /// The spec revision this occurrence was armed for; an edit re-arms it.
+    var specRevision: Int?
 
     var id: String { Occurrence.key(alarmID: alarmID, fireDate: fireDate) }
 
@@ -52,6 +60,7 @@ struct Occurrence: Codable, Hashable, Identifiable, Sendable {
     }
 
     var isCompleted: Bool { completedAt != nil }
+    var isCheck: Bool { checkOf != nil }
 
     /// After this moment the occurrence can no longer be "active".
     var windowEnd: Date {
@@ -63,16 +72,21 @@ struct Occurrence: Codable, Hashable, Identifiable, Sendable {
     /// Every AlarmKit id this occurrence owns. A repeating primary is shared with
     /// future occurrences, so it's only included for one-offs.
     var ownedAlarmIDs: [UUID] {
-        (isOneOff ? [primaryID].compactMap { $0 } : []) + rings.map(\.id)
+        (isOneOff ? [primaryID].compactMap { $0 } : []) + [gentle?.id].compactMap { $0 } + rings.map(\.id)
     }
 
     /// Every AlarmKit id that can ring for this occurrence.
     var allAlarmIDs: [UUID] {
-        [primaryID].compactMap { $0 } + rings.map(\.id)
+        [primaryID, gentle?.id].compactMap { $0 } + rings.map(\.id)
     }
 
     func pendingRings(after now: Date) -> [ArmedRing] {
         rings.filter { $0.fireDate > now }
+    }
+
+    /// Follow-up rings plus a gentle start that hasn't fired yet — what counts against the budget.
+    func pendingAlarmCount(after now: Date) -> Int {
+        pendingRings(after: now).count + ((gentle?.fireDate ?? .distantPast) > now ? 1 : 0)
     }
 }
 
@@ -103,7 +117,10 @@ struct ChainState: Codable, Hashable, Sendable {
     func occurrence(_ id: String) -> Occurrence? { occurrences.first { $0.id == id } }
 
     func occurrence(owning alarmKitID: UUID) -> Occurrence? {
-        occurrences.first { $0.rings.contains { $0.id == alarmKitID } || ($0.isOneOff && $0.primaryID == alarmKitID) }
+        occurrences.first {
+            $0.rings.contains { $0.id == alarmKitID } || $0.gentle?.id == alarmKitID
+                || ($0.isOneOff && $0.primaryID == alarmKitID)
+        }
     }
 }
 
@@ -111,6 +128,16 @@ struct ChainState: Codable, Hashable, Sendable {
 struct AlarmSnapshot: Hashable, Sendable {
     var id: UUID
     var isAlerting: Bool
+}
+
+/// How a ring presents itself.
+enum RingStyle: Hashable, Sendable {
+    /// The alarm, or a follow-up ring of its chain.
+    case standard
+    /// A soft ring shortly before the alarm.
+    case gentle
+    /// "Still up?" — a few minutes after the challenges were finished.
+    case check
 }
 
 /// Everything the scheduler needs to configure one fixed ring.
@@ -123,6 +150,7 @@ struct RingRequest: Hashable, Sendable {
     var soundID: String
     /// 0 = the occurrence's first ring (one-offs), 1… = follow-ups.
     var index: Int
+    var style: RingStyle = .standard
 }
 
 enum ChainOperation: Hashable, Sendable {

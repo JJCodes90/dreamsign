@@ -164,7 +164,49 @@ final class AlarmCoordinator {
     }
 
     func upcomingOneOff(for alarmID: UUID) -> Occurrence? {
-        state.occurrences.first { $0.alarmID == alarmID && $0.isOneOff && !$0.isTest && !$0.isCompleted && $0.fireDate > .now }
+        state.occurrences.first {
+            $0.alarmID == alarmID && $0.isOneOff && !$0.isTest && !$0.isCheck && !$0.isCompleted && $0.fireDate > .now
+        }
+    }
+
+    // MARK: Wake-up check
+
+    /// Arms "Still up?" a few minutes after `occurrence` was finished.
+    @discardableResult
+    func armCheck(after occurrence: Occurrence, delay: TimeInterval = ChainPlanner.checkDelay) async -> Occurrence? {
+        var armed: Occurrence?
+        await serialized {
+            guard let spec = self.state.spec(occurrence.alarmID) else { return }
+            let fire = Date.now.addingTimeInterval(delay)
+            let (state, check, operations) = self.planner.armCheck(after: occurrence, spec: spec, at: fire, state: self.state)
+            self.state = state
+            let applied = await self.client.apply(operations)
+            self.absorb(applied)
+            self.save()
+            armed = applied.failedSchedules.contains(check.primaryID ?? UUID()) ? nil : check
+        }
+        return armed
+    }
+
+    /// Calls off a wake-up check (the person is clearly up and using the app).
+    func cancelCheck(_ id: String) async {
+        await serialized {
+            guard self.state.occurrence(id)?.isCheck == true else { return }
+            let (state, operations) = self.planner.cancelOccurrence(id, state: self.state, existing: self.client.snapshot())
+            self.state = state
+            _ = await self.client.apply(operations)
+            self.save()
+        }
+    }
+
+    /// The pending wake-up check that follows `occurrenceID`, if one is armed.
+    func check(following occurrenceID: String) -> Occurrence? {
+        state.occurrences.first { $0.checkOf == occurrenceID && !$0.isCompleted }
+    }
+
+    /// When the next ring of an occurrence is due — shown as a countdown in the wake flow.
+    func nextRing(of occurrenceID: String, after now: Date = .now) -> Date? {
+        state.occurrence(occurrenceID)?.pendingRings(after: now).map(\.fireDate).min()
     }
 
     // MARK: Internals

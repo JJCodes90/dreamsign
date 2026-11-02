@@ -34,6 +34,9 @@ enum AlarmSound: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
+    /// Soft sound for gentle start rings (not offered as an alarm sound).
+    static let gentleFileName = "Sunrise.wav"
+
     var previewURL: URL? {
         guard let fileName else { return nil }
         return Bundle.main.url(forResource: (fileName as NSString).deletingPathExtension, withExtension: "wav")

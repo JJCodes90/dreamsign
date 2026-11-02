@@ -9,8 +9,13 @@ struct AlarmDraft {
     var sound: AlarmSound = .system
     var challenges = Challenge.defaults
     var chainMinutes = 15
+    var gentleStartMinutes = 0
+    var wakeCheck = false
+    var bedtimeNudge = false
+    var sleepGoalMinutes = 480
 
     static let chainOptions = [5, 10, 15, 20, 30]
+    static let gentleOptions = [5, 10, 15, 20]
 
     init(_ alarm: WakeAlarm?) {
         guard let alarm else { return }
@@ -20,7 +25,13 @@ struct AlarmDraft {
         sound = alarm.sound
         challenges = alarm.challenges
         chainMinutes = alarm.chainMinutes
+        gentleStartMinutes = alarm.gentleStartMinutes
+        wakeCheck = alarm.wakeCheck
+        bedtimeNudge = alarm.bedtimeNudge
+        sleepGoalMinutes = alarm.sleepGoalMinutes
     }
+
+    var bedtime: AlarmTime { SleepPlan.bedtime(forWake: time, sleepMinutes: sleepGoalMinutes) }
 
     var timeDate: Date {
         get { time.date() }
@@ -46,6 +57,10 @@ struct AlarmDraft {
         alarm.sound = sound
         alarm.challenges = challenges
         alarm.chainMinutes = chainMinutes
+        alarm.gentleStartMinutes = gentleStartMinutes
+        alarm.wakeCheck = wakeCheck
+        alarm.bedtimeNudge = bedtimeNudge
+        alarm.sleepGoalMinutes = sleepGoalMinutes
         alarm.isEnabled = true
         alarm.touch()
     }
@@ -100,6 +115,8 @@ struct AlarmEditorView: View {
                     }
                 }
 
+                smartWakeSection
+
                 challengesSection
 
                 Section {
@@ -152,6 +169,47 @@ struct AlarmEditorView: View {
         }
     }
 
+    private var smartWakeSection: some View {
+        Section {
+            Toggle(isOn: Binding(get: { draft.gentleStartMinutes > 0 },
+                                 set: { draft.gentleStartMinutes = $0 ? 10 : 0 })) {
+                SmartWakeRow(symbol: "sunrise.fill", tint: Palette.dawn, title: "Gentle start",
+                             detail: draft.gentleStartMinutes > 0
+                                ? "A soft sound \(draft.gentleStartMinutes) min before"
+                                : "A soft sound before the alarm")
+            }
+            if draft.gentleStartMinutes > 0 {
+                Picker("Starts", selection: $draft.gentleStartMinutes) {
+                    ForEach(AlarmDraft.gentleOptions, id: \.self) { Text("\($0) min before").tag($0) }
+                }
+            }
+            Toggle(isOn: $draft.wakeCheck) {
+                SmartWakeRow(symbol: "checkmark.circle.fill", tint: Palette.mint, title: "Wake-up check",
+                             detail: "5 min after you finish, prove you're still up")
+            }
+            Toggle(isOn: Binding(get: { draft.bedtimeNudge }, set: { on in
+                draft.bedtimeNudge = on
+                if on { Task { if !(await BedtimeNudges.requestPermission()) { draft.bedtimeNudge = false } } }
+            })) {
+                SmartWakeRow(symbol: "moon.zzz.fill", tint: Palette.iris, title: "Bedtime nudge",
+                             detail: "Bed by \(ClockFormat.string(draft.bedtime)) for \(SleepPlan.goalTitle(draft.sleepGoalMinutes))")
+            }
+            if draft.bedtimeNudge {
+                Picker("Sleep goal", selection: $draft.sleepGoalMinutes) {
+                    ForEach(SleepPlan.goalOptions, id: \.self) { Text(SleepPlan.goalTitle($0)).tag($0) }
+                }
+            }
+        } header: {
+            Text("Smart wake")
+        } footer: {
+            if draft.bedtimeNudge {
+                Text("A reminder 30 minutes before bedtime, counting 15 minutes to fall asleep.")
+            } else if draft.wakeCheck {
+                Text("The check is skipped if you're still using Dreamsign when it's due.")
+            }
+        }
+    }
+
     private var challengesSection: some View {
         Section {
             ForEach($draft.challenges) { $challenge in
@@ -181,7 +239,10 @@ struct AlarmEditorView: View {
         } header: {
             Text("To turn it off")
         } footer: {
-            if draft.challenges.isEmpty {
+            if draft.challenges.contains(where: \.needsSetup) {
+                Text("Register a code for Scan, or it switches to math in the morning.")
+                    .foregroundStyle(Palette.ember)
+            } else if draft.challenges.isEmpty {
                 Text("With no challenges, one tap in the app turns it off.")
             } else if draft.mathBeforeJournal {
                 Text("Tip: journal before math — dream recall fades within minutes.")
@@ -249,7 +310,31 @@ struct ChallengeRow: View {
                 .background(Palette.dawn.opacity(0.14), in: .rect(cornerRadius: 10, style: .continuous))
             VStack(alignment: .leading, spacing: 2) {
                 Text(challenge.kind.title).foregroundStyle(Palette.text)
-                Text(challenge.summary).font(.subheadline).foregroundStyle(Palette.textSecondary)
+                Text(challenge.summary).font(.subheadline)
+                    .foregroundStyle(challenge.needsSetup ? Palette.ember : Palette.textSecondary)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+/// Icon + title + one line, for the Smart wake toggles.
+struct SmartWakeRow: View {
+    var symbol: String
+    var tint: Color
+    var title: LocalizedStringKey
+    var detail: LocalizedStringKey
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: symbol)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(tint)
+                .frame(width: 36, height: 36)
+                .background(tint.opacity(0.14), in: .rect(cornerRadius: 10, style: .continuous))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).foregroundStyle(Palette.text)
+                Text(detail).font(.subheadline).foregroundStyle(Palette.textSecondary)
             }
         }
         .padding(.vertical, 2)
@@ -258,6 +343,7 @@ struct ChallengeRow: View {
 
 struct ChallengeSettingsView: View {
     @Binding var challenge: Challenge
+    @State private var registering = false
 
     var body: some View {
         Form {
@@ -333,12 +419,63 @@ struct ChallengeSettingsView: View {
                 } footer: {
                     Text("Distinct real words — mashing and padding don't count. If no dream comes back, you can write your first thoughts instead (\(JournalRequirement.noRecall.minimumWords) words).")
                 }
+            case .steps:
+                Section {
+                    Picker("Steps", selection: $challenge.stepCount) {
+                        ForEach(Challenge.stepOptions, id: \.self) { Text("\($0)").tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                } header: {
+                    Text("Steps")
+                } footer: {
+                    Text("Counted by your iPhone's motion sensor. If Motion & Fitness access is off, you'll shake instead.")
+                }
+            case .scan:
+                Section {
+                    if challenge.scanCode.isEmpty {
+                        Button { registering = true } label: {
+                            Label("Register a code", systemImage: "barcode.viewfinder")
+                        }
+                    } else {
+                        LabeledContent("Code", value: challenge.scanLabel.isEmpty ? String(localized: "Registered") : challenge.scanLabel)
+                        Button("Use a different code") { registering = true }
+                    }
+                } header: {
+                    Text("Your code")
+                } footer: {
+                    Text("Any barcode or QR code on something far from your bed — toothpaste in the bathroom, the coffee bag in the kitchen. If the camera can't be used in the morning, you'll do math instead.")
+                }
+            case .phrase:
+                Section {
+                    Picker("Length", selection: $challenge.phraseLength) {
+                        ForEach(PhraseLength.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                } header: {
+                    Text("Length")
+                } footer: {
+                    Text("Like “\(challenge.phraseLength.phrases[0])”")
+                }
+            case .memory:
+                Section {
+                    Picker("Pattern", selection: $challenge.memoryLength) {
+                        ForEach(Challenge.memoryOptions, id: \.self) { Text("\($0)").tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                } header: {
+                    Text("Pattern length")
+                } footer: {
+                    Text("Watch the tiles light up, then tap them in order. A wrong tap plays a new pattern.")
+                }
             }
         }
         .scrollContentBackground(.hidden)
         .background(NightBackground(stars: false))
         .navigationTitle(challenge.kind.title)
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $registering) {
+            ScanSetupView(challenge: $challenge)
+        }
     }
 }
 

@@ -20,6 +20,7 @@ struct RootView: View {
                     Tab("Learn", systemImage: "graduationcap.fill", value: AppModel.Tab.learn) { LearnView() }
                 }
                 .tabBarMinimizeBehavior(.onScrollDown)
+                .tracksTouches()
                 .fullScreenCover(item: $model.wake) { session in
                     WakeFlowView(session: session)
                 }
@@ -35,7 +36,9 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active: Task { await model.becameActive(context) }
-            case .background: AppModel.scheduleBackgroundRefresh()
+            case .background:
+                AppModel.scheduleBackgroundRefresh()
+                model.leftApp()
             default: break
             }
         }

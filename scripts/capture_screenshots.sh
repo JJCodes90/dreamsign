@@ -18,7 +18,7 @@ mkdir -p "$OUT"
 limit() { local seconds="$1"; shift; perl -e 'alarm shift; exec @ARGV' "$seconds" "$@"; }
 log() { echo "[$(date +%H:%M:%S)] $*"; }
 
-SCREENS="alarms journal insights learn lesson reality ssild nightstand onboarding alarm-editor wbtb entry settings wake-shake wake-journal wake-math wake-complete mild sleep"
+SCREENS="alarms journal insights learn lesson reality ssild nightstand onboarding alarm-editor wbtb entry settings wake-shake wake-journal wake-math wake-steps wake-scan wake-phrase wake-memory wake-check wake-complete mild sleep"
 
 RUNTIME=$(xcrun simctl list runtimes -j | python3 -c '
 import json, sys

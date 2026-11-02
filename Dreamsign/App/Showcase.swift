@@ -46,8 +46,14 @@ enum Showcase {
         work.label = "Work"
         var math = Challenge(kind: .math)
         math.mathProblems = 3
-        work.challenges = [Challenge(kind: .shake), Challenge(kind: .journal), math]
+        var scan = Challenge(kind: .scan)
+        scan.scanCode = "0123456789012"
+        scan.scanLabel = "Toothpaste, bathroom"
+        work.challenges = [Challenge(kind: .shake), Challenge(kind: .journal), math, scan]
         work.sound = .tide
+        work.gentleStartMinutes = 10
+        work.wakeCheck = true
+        work.bedtimeNudge = true
 
         let weekend = WakeAlarm(time: AlarmTime(hour: 9, minute: 15), weekdays: .weekends)
         weekend.label = "Slow Saturday"
@@ -149,7 +155,17 @@ struct ShowcaseRoot: View {
         case "wake-math":
             WakeFlowView(session: wakeSession, startIndex: 2)
         case "wake-complete":
-            WakeFlowView(session: wakeSession, startIndex: 3, savedEntry: entries.first)
+            WakeFlowView(session: wakeSession, startIndex: 4, savedEntry: entries.first)
+        case "wake-steps":
+            WakeFlowView(session: session(.steps), startIndex: 0)
+        case "wake-scan":
+            WakeFlowView(session: session(.scan), startIndex: 0)
+        case "wake-phrase":
+            WakeFlowView(session: session(.phrase), startIndex: 0)
+        case "wake-memory":
+            WakeFlowView(session: session(.memory), startIndex: 0)
+        case "wake-check":
+            WakeFlowView(session: checkSession, startIndex: 0)
         case "mild":
             WakeFlowView(session: wbtbSession, startIndex: 1, savedEntry: entries.first)
         case "sleep":
@@ -175,6 +191,29 @@ struct ShowcaseRoot: View {
         let alarmID = workAlarm?.id ?? UUID()
         let occurrence = Occurrence(alarmID: alarmID, fireDate: .now.addingTimeInterval(-252), kind: .wake,
                                     chainLength: 15, primaryID: alarmID)
+        return WakeSession(occurrence: occurrence, alarm: workAlarm)
+    }
+
+    /// A one-challenge wake-up for showing a single challenge type.
+    private func session(_ kind: Challenge.Kind) -> WakeSession {
+        let alarm = WakeAlarm(time: AlarmTime(hour: 6, minute: 45), weekdays: .weekdays)
+        alarm.label = "Work"
+        var challenge = Challenge(kind: kind)
+        if kind == .scan {
+            challenge.scanCode = "0123456789012"
+            challenge.scanLabel = "Toothpaste, bathroom"
+        }
+        alarm.challenges = [challenge]
+        let occurrence = Occurrence(alarmID: alarm.id, fireDate: .now.addingTimeInterval(-140), kind: .wake,
+                                    chainLength: 15, primaryID: alarm.id)
+        return WakeSession(occurrence: occurrence, alarm: alarm)
+    }
+
+    private var checkSession: WakeSession {
+        let alarmID = workAlarm?.id ?? UUID()
+        var occurrence = Occurrence(alarmID: alarmID, fireDate: .now.addingTimeInterval(-20), kind: .wake,
+                                    chainLength: 4, primaryID: UUID(), isOneOff: true)
+        occurrence.checkOf = "showcase"
         return WakeSession(occurrence: occurrence, alarm: workAlarm)
     }
 

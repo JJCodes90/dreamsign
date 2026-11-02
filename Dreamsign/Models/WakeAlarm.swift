@@ -41,6 +41,17 @@ final class WakeAlarm {
     var createdAt: Date = Date.now
     var modifiedAt: Date = Date.now
 
+    // Smart wake
+    /// Minutes before the alarm for a soft ring; 0 = off.
+    var gentleStartMinutes: Int = 0
+    /// "Still up?" a few minutes after the challenges are done.
+    var wakeCheck: Bool = false
+    /// Falling-asleep sounds that rise into this alarm (started from Tonight).
+    var sleepSounds: Bool = false
+    /// A reminder to go to bed in time for `sleepGoalMinutes` of sleep.
+    var bedtimeNudge: Bool = false
+    var sleepGoalMinutes: Int = 480
+
     // WBTB only
     var bedtimeHour: Int = 23
     var bedtimeMinute: Int = 0
@@ -124,6 +135,12 @@ final class WakeAlarm {
 
     var spec: AlarmSpec {
         AlarmSpec(id: id, time: time, weekdays: weekdays, label: displayLabel, soundID: soundRaw,
-                  chainLength: chainMinutes, kind: kind, isEnabled: isEnabled, revision: revision, modifiedAt: modifiedAt)
+                  chainLength: chainMinutes, kind: kind, isEnabled: isEnabled, revision: revision, modifiedAt: modifiedAt,
+                  gentleMinutes: kind == .wake && gentleStartMinutes > 0 ? gentleStartMinutes : nil)
+    }
+
+    /// When to be asleep by for the sleep goal, allowing time to drift off.
+    var bedtimeForGoal: AlarmTime {
+        SleepPlan.bedtime(forWake: time, sleepMinutes: sleepGoalMinutes)
     }
 }

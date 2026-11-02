@@ -53,6 +53,9 @@ final class WakeFlowModel {
             try? context.save()
         }
         await app.syncAlarms(context)
+        if session.armsCheck {
+            await app.armCheck(after: session.occurrence)
+        }
     }
 }
 
@@ -99,6 +102,8 @@ struct WakeFlowView: View {
             challengeView(challenge)
         case .confirm?:
             ConfirmAwakeView { advance() }
+        case .stillUp?:
+            StillUpView(occurrenceID: flow.session.occurrence.id, onActivity: { flow.activity() }) { advance() }
         case .technique(.ssild)?:
             SSILDView { advance() }
         case .technique(.mild)?:
@@ -129,6 +134,15 @@ struct WakeFlowView: View {
                 flow.savedEntry = entry
                 advance()
             }
+        case .steps:
+            StepsChallengeView(target: challenge.stepCount, onActivity: { flow.activity() }) { advance() }
+        case .scan:
+            ScanChallengeView(code: challenge.scanCode, label: challenge.scanLabel,
+                              onActivity: { flow.activity() }) { advance() }
+        case .phrase:
+            PhraseChallengeView(length: challenge.phraseLength, onActivity: { flow.activity() }) { advance() }
+        case .memory:
+            MemoryChallengeView(length: challenge.memoryLength, onActivity: { flow.activity() }) { advance() }
         }
     }
 

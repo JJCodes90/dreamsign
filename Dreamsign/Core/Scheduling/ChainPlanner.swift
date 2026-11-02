@@ -16,6 +16,10 @@ struct ChainPlanner {
     static let pendingWakeLifetime: TimeInterval = 30 * 60
     /// Completed occurrences are remembered this long, so an inferred wake never repeats.
     static let completedRetention: TimeInterval = 48 * 3600
+    /// How long after finishing the wake-up check rings.
+    static let checkDelay: TimeInterval = 5 * 60
+    /// Follow-up rings of a wake-up check.
+    static let checkRingCount = 4
 
     var calendar: Calendar
     /// AlarmKit has no fixed cap but throws `maximumLimitReached` under pressure, so we budget.
@@ -86,7 +90,7 @@ struct ChainPlanner {
         // 3. Arm the next occurrence of each enabled spec, soonest first, within budget.
         var budget = maxArmedRings - kept
             .filter { !$0.isCompleted }
-            .reduce(0) { $0 + $1.pendingRings(after: now).count }
+            .reduce(0) { $0 + $1.pendingAlarmCount(after: now) }
 
         let upcoming = input.specs
             .filter { $0.isEnabled && !plan.firedOneShots.contains($0.id) }
@@ -114,11 +118,19 @@ struct ChainPlanner {
             let count = min(spec.chainLength, max(budget, 0))
             if count < spec.chainLength { plan.truncated = true }
             let rings = makeRings(after: fireDate, indices: 1..<(1 + count))
-            let occurrence = Occurrence(alarmID: spec.id, fireDate: fireDate, kind: spec.kind,
+            var occurrence = Occurrence(alarmID: spec.id, fireDate: fireDate, kind: spec.kind,
                                         chainLength: spec.chainLength, rings: rings, primaryID: spec.id)
+            occurrence.specRevision = spec.revision
+            budget -= count
+            if let gentle = gentleRing(for: spec, fireDate: fireDate, now: now), budget > 0 {
+                occurrence.gentle = gentle
+                plan.operations.append(.scheduleRing(RingRequest(
+                    ring: gentle, alarmID: spec.id, occurrenceID: occurrence.id, kind: spec.kind,
+                    label: spec.label, soundID: spec.soundID, index: 0, style: .gentle)))
+                budget -= 1
+            }
             kept.append(occurrence)
             plan.operations += ringOperations(rings, startIndex: 1, occurrence: occurrence, spec: spec)
-            budget -= count
         }
         plan.state.occurrences = kept.sorted { $0.fireDate < $1.fireDate }
 
@@ -146,9 +158,18 @@ struct ChainPlanner {
         if occurrence.isOneOff { return true }
         guard let spec = state.spec(occurrence.alarmID), spec.isEnabled,
               spec.chainLength == occurrence.chainLength,
+              occurrence.specRevision == nil || occurrence.specRevision == spec.revision,
               let next = nextFire(of: spec, primaries: state.primaries, after: now)
         else { return false }
         return next == occurrence.fireDate
+    }
+
+    /// A gentle-start ring for an occurrence, if the spec wants one and it's still ahead.
+    func gentleRing(for spec: AlarmSpec, fireDate: Date, now: Date) -> ArmedRing? {
+        guard let minutes = spec.gentleMinutes, minutes > 0 else { return nil }
+        let date = fireDate.addingTimeInterval(-Double(minutes) * 60)
+        guard date > now.addingTimeInterval(5) else { return nil }
+        return ArmedRing(id: makeID(), fireDate: date)
     }
 
     /// Next fire date of a spec's primary. A one-shot only ever fires at the date it was
@@ -282,7 +303,8 @@ struct ChainPlanner {
         let current = state.occurrence(occurrence.id) ?? occurrence
         let alerting = Set(existing.filter(\.isAlerting).map(\.id))
         let present = Set(existing.map(\.id))
-        let pending = Set(current.pendingRings(after: now).map(\.id))
+        var pending = Set(current.pendingRings(after: now).map(\.id))
+        if let gentle = current.gentle, gentle.fireDate > now { pending.insert(gentle.id) }
         var operations: [ChainOperation] = []
         for id in current.allAlarmIDs {
             if alerting.contains(id) {
@@ -310,20 +332,62 @@ struct ChainPlanner {
         let primary = ArmedRing(id: makeID(), fireDate: fireDate)
         let count = isTest ? min(spec.chainLength, 3) : spec.chainLength
         let rings = makeRings(after: fireDate, indices: 1..<(1 + count))
-        let occurrence = Occurrence(alarmID: spec.id, fireDate: fireDate, kind: spec.kind, chainLength: count,
+        var occurrence = Occurrence(alarmID: spec.id, fireDate: fireDate, kind: spec.kind, chainLength: count,
                                     rings: rings, primaryID: primary.id, isOneOff: true, isTest: isTest)
         state.occurrences.removeAll { $0.id == occurrence.id }
-        state.occurrences.append(occurrence)
         let first = RingRequest(ring: primary, alarmID: spec.id, occurrenceID: occurrence.id, kind: spec.kind,
                                 label: spec.label, soundID: spec.soundID, index: 0)
-        let operations = [ChainOperation.scheduleRing(first)]
-            + ringOperations(rings, startIndex: 1, occurrence: occurrence, spec: spec)
+        var operations = [ChainOperation.scheduleRing(first)]
+        if !isTest, let gentle = gentleRing(for: spec, fireDate: fireDate, now: .now) {
+            occurrence.gentle = gentle
+            operations.append(.scheduleRing(RingRequest(
+                ring: gentle, alarmID: spec.id, occurrenceID: occurrence.id, kind: spec.kind,
+                label: spec.label, soundID: spec.soundID, index: 0, style: .gentle)))
+        }
+        state.occurrences.append(occurrence)
+        operations += ringOperations(rings, startIndex: 1, occurrence: occurrence, spec: spec)
         return (state, occurrence, operations)
+    }
+
+    // MARK: - Wake-up check
+
+    /// Arms "Still up?": a short chain a few minutes after `occurrence` was completed. It runs
+    /// through the normal wake flow, with a quick tap test instead of the alarm's challenges.
+    func armCheck(after occurrence: Occurrence, spec: AlarmSpec, at fireDate: Date,
+                  state input: ChainState) -> (ChainState, Occurrence, [ChainOperation]) {
+        var state = input
+        let primary = ArmedRing(id: makeID(), fireDate: fireDate)
+        let rings = makeRings(after: fireDate, indices: 1..<(1 + Self.checkRingCount))
+        var check = Occurrence(alarmID: spec.id, fireDate: fireDate, kind: .wake, chainLength: Self.checkRingCount,
+                               rings: rings, primaryID: primary.id, isOneOff: true, isTest: occurrence.isTest)
+        check.checkOf = occurrence.id
+        state.occurrences.removeAll { $0.id == check.id }
+        state.occurrences.append(check)
+        let requests = [RingRequest(ring: primary, alarmID: spec.id, occurrenceID: check.id, kind: .wake,
+                                    label: spec.label, soundID: spec.soundID, index: 0, style: .check)]
+            + rings.enumerated().map { offset, ring in
+                RingRequest(ring: ring, alarmID: spec.id, occurrenceID: check.id, kind: .wake,
+                            label: spec.label, soundID: spec.soundID, index: offset + 1, style: .check)
+            }
+        return (state, check, requests.map { .scheduleRing($0) })
+    }
+
+    /// Drops a not-yet-finished occurrence (a skipped wake-up check) and everything it armed.
+    func cancelOccurrence(_ id: String, state input: ChainState, existing: [AlarmSnapshot]) -> (ChainState, [ChainOperation]) {
+        var state = input
+        guard let occurrence = state.occurrence(id), !occurrence.isCompleted else { return (state, []) }
+        state.occurrences.removeAll { $0.id == id }
+        if state.pendingWake?.occurrenceID == id { state.pendingWake = nil }
+        let alerting = Set(existing.filter(\.isAlerting).map(\.id))
+        let operations: [ChainOperation] = occurrence.ownedAlarmIDs.map { alerting.contains($0) ? .stop($0) : .cancel($0) }
+        return (state, operations)
     }
 
     func cancelOneOffs(for alarmID: UUID, state input: ChainState, now: Date) -> (ChainState, [ChainOperation]) {
         var state = input
-        let targets = state.occurrences.filter { $0.alarmID == alarmID && $0.isOneOff && !$0.isCompleted && $0.fireDate > now }
+        let targets = state.occurrences.filter {
+            $0.alarmID == alarmID && $0.isOneOff && !$0.isCheck && !$0.isCompleted && $0.fireDate > now
+        }
         state.occurrences.removeAll { target in targets.contains { $0.id == target.id } }
         return (state, targets.flatMap { $0.ownedAlarmIDs.map { ChainOperation.cancel($0) } })
     }
@@ -336,8 +400,9 @@ struct ChainPlanner {
 
     private func ringOperations(_ rings: [ArmedRing], startIndex: Int, occurrence: Occurrence, spec: AlarmSpec) -> [ChainOperation] {
         rings.enumerated().map { offset, ring in
-            .scheduleRing(RingRequest(ring: ring, alarmID: spec.id, occurrenceID: occurrence.id, kind: spec.kind,
-                                      label: spec.label, soundID: spec.soundID, index: startIndex + offset))
+            .scheduleRing(RingRequest(ring: ring, alarmID: spec.id, occurrenceID: occurrence.id, kind: occurrence.kind,
+                                      label: spec.label, soundID: spec.soundID, index: startIndex + offset,
+                                      style: occurrence.isCheck ? .check : .standard))
         }
     }
 }

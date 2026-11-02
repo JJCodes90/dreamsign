@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Synthesizes Dreamsign's alarm sounds (original, royalty-free).
 
-Each is 28 s (AlarmKit/notification sounds must stay under 30 s), mono 16-bit 44.1 kHz WAV,
+Alarm sounds are 28 s (AlarmKit/notification sounds must stay under 30 s), mono 16-bit 44.1 kHz WAV,
 and builds in intensity inside the file — useful if iOS plays custom alarm sounds once
 rather than looping (see docs/DEVICE_TESTING.md).
 
@@ -138,6 +138,32 @@ def beacon():
     return fade_edges(normalize(buf, 0.94) * level)
 
 
+def sunrise():
+    """Gentle start: low, slow bells over a warm pad, staying soft the whole way."""
+    buf = np.zeros_like(t_all)
+    scale = [57, 60, 62, 64, 67, 69]          # A minor pentatonic, low register
+    pattern = [0, 2, 4, 3, 1, 4, 5, 2]
+    step = 1.75
+    for i in range(int(LENGTH / step)):
+        place(buf, bell(midi(scale[pattern[i % len(pattern)]]), 4.0) * 0.7, i * step + 0.4)
+    pad = sum(np.sin(2 * np.pi * midi(n) * t_all) for n in (45, 52, 57)) * 0.08
+    pad *= 0.7 + 0.3 * np.sin(2 * np.pi * 0.07 * t_all)
+    mix = echo(buf, 0.42, 0.35) + pad
+    return fade_edges(normalize(mix, 0.42) * ramp(0.12, 1.0, 1.1), 0.8)
+
+
+def cue():
+    """Lucidity cue: three soft glass notes, about two seconds, meant to be played quietly."""
+    n = int(2.4 * RATE)
+    buf = np.zeros(n)
+    for k, note in enumerate((81, 84, 88)):
+        tone = bell(midi(note), 1.8) * (0.9 - 0.15 * k)
+        i = int(k * 0.32 * RATE)
+        j = min(i + len(tone), n)
+        buf[i:j] += tone[: j - i]
+    return fade_edges(normalize(echo(buf, 0.18, 0.25, 3), 0.8), 0.02)
+
+
 def write(name, signal):
     os.makedirs(OUT, exist_ok=True)
     data = (np.clip(signal, -1, 1) * 32767).astype("<i2")
@@ -152,4 +178,6 @@ if __name__ == "__main__":
     write("Dawn.wav", dawn())
     write("Tide.wav", tide())
     write("Beacon.wav", beacon())
+    write("Sunrise.wav", sunrise())
+    write("Cue.wav", cue())
     print("wrote", os.path.abspath(OUT))

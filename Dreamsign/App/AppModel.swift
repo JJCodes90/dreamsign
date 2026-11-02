@@ -15,7 +15,10 @@ final class AppModel {
     var wake: WakeSession?
     /// Set once the wake flow's enforced steps are done (MILD / back-to-sleep may still be showing).
     var wakeFinishedAt: Date?
+    /// The armed wake-up check, shown on the finish screen.
+    var pendingCheck: Occurrence?
     let coordinator = AlarmCoordinator.shared
+    @ObservationIgnored private var checkSkipTask: Task<Void, Never>?
 
     /// Pushes the current alarms to the alarm layer and reconciles AlarmKit.
     func syncAlarms(_ context: ModelContext) async {
@@ -23,6 +26,7 @@ final class AppModel {
         if disableFiredOneShots(context) {
             await coordinator.update(specs: allAlarms(context).map(\.spec))
         }
+        await BedtimeNudges.sync(allAlarms(context))
     }
 
     /// Shows the wake flow if an alarm is (or just was) ringing. A finished flow left on screen
@@ -49,6 +53,31 @@ final class AppModel {
     private func startWake(_ occurrence: Occurrence, _ context: ModelContext) {
         wakeFinishedAt = nil
         wake = WakeSession(occurrence: occurrence, alarm: alarm(occurrence.alarmID, context))
+    }
+
+    // MARK: Wake-up check
+
+    /// Arms "Still up?" and, while the app stays open and in use, quietly calls it off: the
+    /// person is plainly awake. Leaving the app keeps it armed.
+    func armCheck(after occurrence: Occurrence) async {
+        guard let check = await coordinator.armCheck(after: occurrence) else { return }
+        pendingCheck = check
+        checkSkipTask?.cancel()
+        checkSkipTask = Task { [weak self] in
+            let wait = check.fireDate.timeIntervalSinceNow - 20
+            try? await Task.sleep(for: .seconds(max(wait, 0)))
+            guard !Task.isCancelled, let self else { return }
+            if TouchTracker.shared.touchedRecently(within: 120) {
+                await self.coordinator.cancelCheck(check.id)
+                if self.pendingCheck?.id == check.id { self.pendingCheck = nil }
+            }
+        }
+    }
+
+    /// The app went to the background: the check stays armed.
+    func leftApp() {
+        checkSkipTask?.cancel()
+        checkSkipTask = nil
     }
 
     func becameActive(_ context: ModelContext) async {
@@ -109,6 +138,8 @@ struct WakeSession: Identifiable {
         case challenge(Challenge)
         /// Used when an alarm has no challenges: one tap to confirm.
         case confirm
+        /// The wake-up check: tap dots in order.
+        case stillUp
         case technique(WBTBTechnique)
         case backToSleep
 
@@ -116,6 +147,7 @@ struct WakeSession: Identifiable {
             switch self {
             case .challenge(let challenge): challenge.id.uuidString
             case .confirm: "confirm"
+            case .stillUp: "still-up"
             case .technique(let technique): technique.rawValue
             case .backToSleep: "sleep"
             }
@@ -123,7 +155,7 @@ struct WakeSession: Identifiable {
 
         var isEnforced: Bool {
             switch self {
-            case .challenge, .confirm: true
+            case .challenge, .confirm, .stillUp: true
             case .technique, .backToSleep: false
             }
         }
@@ -136,6 +168,8 @@ struct WakeSession: Identifiable {
     let mildMinutes: Int
     /// A non-repeating, non-test alarm — switched off once completed.
     let disablesAlarm: Bool
+    /// Arm "Still up?" after the challenges.
+    let armsCheck: Bool
 
     var id: String { occurrence.id }
 
@@ -145,6 +179,11 @@ struct WakeSession: Identifiable {
         label = alarm?.displayLabel ?? String(localized: "Alarm")
         mildMinutes = alarm?.mildMinutes ?? 3
         disablesAlarm = (alarm?.weekdays.isOneShot ?? false) && !occurrence.isOneOff
+        armsCheck = occurrence.kind == .wake && !occurrence.isCheck && (alarm?.wakeCheck ?? false)
+        if occurrence.isCheck {
+            steps = [.stillUp]
+            return
+        }
         switch occurrence.kind {
         case .wake:
             let challenges = alarm?.challenges ?? Challenge.defaults

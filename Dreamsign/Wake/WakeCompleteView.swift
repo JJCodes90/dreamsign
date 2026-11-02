@@ -8,6 +8,7 @@ struct WakeCompleteView: View {
 
     @Query private var entries: [DreamEntry]
     @Environment(\.modelContext) private var context
+    @Environment(AppModel.self) private var app
     @State private var tagging = false
     @State private var appeared = false
 
@@ -17,6 +18,7 @@ struct WakeCompleteView: View {
     }
 
     private var greeting: LocalizedStringKey {
+        if session.occurrence.isCheck { return "You're up." }
         if session.occurrence.isTest { return "That's the whole flow." }
         switch Calendar.current.component(.hour, from: .now) {
         case 4..<12: return "Good morning."
@@ -54,12 +56,26 @@ struct WakeCompleteView: View {
                     .foregroundStyle(Palette.textSecondary)
             }
             HStack(spacing: 8) {
-                Chip(text: String(localized: "Up in \(upDuration)"), symbol: "alarm", tint: Palette.dawn)
+                if !session.occurrence.isCheck {
+                    Chip(text: String(localized: "Up in \(upDuration)"), symbol: "alarm", tint: Palette.dawn)
+                }
                 if streak > 0 {
                     Chip(text: String(localized: "Recall streak \(streak)"), symbol: "moon.stars.fill", tint: Palette.iris)
                 }
             }
             .padding(.top, 4)
+            if let check = app.pendingCheck, check.checkOf == session.occurrence.id {
+                VStack(spacing: 2) {
+                    Label("Wake-up check at \(check.fireDate.formatted(date: .omitted, time: .shortened))",
+                          systemImage: "checkmark.circle")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Palette.mint)
+                    Text("Skipped if you're still using Dreamsign then.")
+                        .font(.footnote)
+                        .foregroundStyle(Palette.textTertiary)
+                }
+                .multilineTextAlignment(.center)
+            }
             if let entry, !entry.isNoRecall {
                 VStack(spacing: 6) {
                     Text("How vivid was it?")

@@ -100,16 +100,27 @@ final class AlarmKitClient {
             _ = try await manager.schedule(id: spec.id, configuration: configuration)
 
         case .scheduleRing(let request):
-            var sound = AlarmSound(rawValue: request.soundID) ?? .system
-            // Custom AlarmKit sounds can play once or quietly on some iOS versions; the system
-            // alarm sound is the dependable one, so follow-up wake rings always use it.
-            if request.kind == .wake, request.index > 0 { sound = .system }
-            let configuration = makeConfiguration(
-                schedule: .fixed(request.ring.fireDate),
-                title: Self.title(label: request.label, kind: request.kind, ring: request.index),
-                kind: request.kind, sound: sound,
-                metadata: DreamsignAlarmMetadata(alarmID: request.alarmID, kind: request.kind.rawValue, ring: request.index),
-                alarmKitID: request.ring.id)
+            let metadata = DreamsignAlarmMetadata(alarmID: request.alarmID, kind: request.kind.rawValue, ring: request.index)
+            let configuration: Configuration
+            switch request.style {
+            case .gentle:
+                configuration = makeGentleConfiguration(fireDate: request.ring.fireDate, label: request.label,
+                                                        metadata: metadata, alarmKitID: request.ring.id)
+            case .check:
+                configuration = makeConfiguration(
+                    schedule: .fixed(request.ring.fireDate), title: "Still up? Tap I'm up",
+                    kind: .wake, sound: .system, metadata: metadata, alarmKitID: request.ring.id,
+                    buttonText: "I'm up", buttonSymbol: "checkmark.circle.fill")
+            case .standard:
+                var sound = AlarmSound(rawValue: request.soundID) ?? .system
+                // Custom AlarmKit sounds can play once or quietly on some iOS versions; the system
+                // alarm sound is the dependable one, so follow-up wake rings always use it.
+                if request.kind == .wake, request.index > 0 { sound = .system }
+                configuration = makeConfiguration(
+                    schedule: .fixed(request.ring.fireDate),
+                    title: Self.title(label: request.label, kind: request.kind, ring: request.index),
+                    kind: request.kind, sound: sound, metadata: metadata, alarmKitID: request.ring.id)
+            }
             _ = try await manager.schedule(id: request.ring.id, configuration: configuration)
 
         case .cancel, .stop:
@@ -118,10 +129,11 @@ final class AlarmKitClient {
     }
 
     private func makeConfiguration(schedule: Alarm.Schedule, title: LocalizedStringResource, kind: AlarmKind,
-                                   sound: AlarmSound, metadata: DreamsignAlarmMetadata, alarmKitID: UUID) -> Configuration {
-        let buttonText: LocalizedStringResource = kind == .wbtb ? "Begin" : "Wake Up"
-        let open = AlarmButton(text: buttonText, textColor: .white,
-                               systemImageName: kind == .wbtb ? "moon.stars.fill" : "sun.horizon.fill")
+                                   sound: AlarmSound, metadata: DreamsignAlarmMetadata, alarmKitID: UUID,
+                                   buttonText: LocalizedStringResource? = nil, buttonSymbol: String? = nil) -> Configuration {
+        let text: LocalizedStringResource = buttonText ?? (kind == .wbtb ? "Begin" : "Wake Up")
+        let open = AlarmButton(text: text, textColor: .white,
+                               systemImageName: buttonSymbol ?? (kind == .wbtb ? "moon.stars.fill" : "sun.horizon.fill"))
         // The system supplies the Stop control; it can't be hidden (hence the ring chain).
         let alert = AlarmPresentation.Alert(title: title, secondaryButton: open, secondaryButtonBehavior: .custom)
         let attributes = AlarmAttributes(presentation: AlarmPresentation(alert: alert), metadata: metadata,
@@ -131,6 +143,21 @@ final class AlarmKitClient {
                       stopIntent: StopRingIntent(alarmKitID: alarmKitID),
                       secondaryIntent: WakeUpIntent(alarmKitID: alarmKitID),
                       sound: sound.alertSound)
+    }
+
+    /// A soft ring before the alarm: quiet sound, Stop only, never opens the wake flow.
+    private func makeGentleConfiguration(fireDate: Date, label: String, metadata: DreamsignAlarmMetadata,
+                                         alarmKitID: UUID) -> Configuration {
+        let alert = AlarmPresentation.Alert(title: "Good morning · \(label) soon",
+                                            secondaryButton: nil, secondaryButtonBehavior: nil)
+        let attributes = AlarmAttributes(presentation: AlarmPresentation(alert: alert), metadata: metadata,
+                                         tintColor: Palette.dawn)
+        return .alarm(schedule: .fixed(fireDate),
+                      attributes: attributes,
+                      stopIntent: StopRingIntent(alarmKitID: alarmKitID),
+                      // No secondary button is shown, so this never runs; passed for a stable signature.
+                      secondaryIntent: WakeUpIntent(alarmKitID: alarmKitID),
+                      sound: .named(AlarmSound.gentleFileName))
     }
 
     static func title(label: String, kind: AlarmKind, ring: Int) -> LocalizedStringResource {
