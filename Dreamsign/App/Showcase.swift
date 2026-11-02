@@ -16,8 +16,9 @@ enum Showcase {
     /// Screens that are simply a tab of the normal app.
     static var tab: AppModel.Tab? {
         switch screen ?? "" {
+        case "tonight": .tonight
         case "alarms": .alarms
-        case "journal": .journal
+        case "journal", "dream-world": .journal
         case "insights": .insights
         case "learn": .learn
         default: nil
@@ -156,6 +157,10 @@ struct ShowcaseRoot: View {
             WakeFlowView(session: wakeSession, startIndex: 2)
         case "wake-complete":
             WakeFlowView(session: wakeSession, startIndex: 4, savedEntry: entries.first)
+        case "wake-voice":
+            WakeFlowView(session: wakeSession, startIndex: 1)
+        case "cues":
+            NavigationStack { CuesView() }
         case "wake-steps":
             WakeFlowView(session: session(.steps), startIndex: 0)
         case "wake-scan":

@@ -7,11 +7,17 @@ import SwiftData
 @MainActor
 @Observable
 final class AppModel {
-    enum Tab: Hashable { case alarms, journal, insights, learn }
+    enum Tab: Hashable { case tonight, alarms, journal, insights, learn }
 
     nonisolated static let refreshTaskID = "com.jjcodes.dreamsign.resync"
 
-    var tab: Tab = Showcase.tab ?? .alarms
+    var tab: Tab = Showcase.tab ?? AppModel.defaultTab()
+
+    /// Evenings open on Tonight; the rest of the day on Alarms.
+    static func defaultTab(now: Date = .now, calendar: Calendar = .current) -> Tab {
+        let hour = calendar.component(.hour, from: now)
+        return hour >= 18 || hour < 3 ? .tonight : .alarms
+    }
     var wake: WakeSession?
     /// Set once the wake flow's enforced steps are done (MILD / back-to-sleep may still be showing).
     var wakeFinishedAt: Date?

@@ -8,6 +8,10 @@
 	<string>Dreamsign counts your steps for the Walk wake-up challenge. Nothing leaves your iPhone.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Dreamsign scans the barcode or QR code you chose for the Scan wake-up challenge. Nothing is recorded.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Dreamsign listens while you speak a dream into your journal. Audio isn't saved.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Dreamsign turns your spoken dreams into text, on your iPhone only.</string>
 	<key>UIUserInterfaceStyle</key>
 	<string>Dark</string>
 	<key>UILaunchScreen</key>

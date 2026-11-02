@@ -10,6 +10,8 @@ struct JournalChallengeView: View {
     var onComplete: (DreamEntry) -> Void
 
     @Environment(\.modelContext) private var context
+    @Query private var signs: [DreamSign]
+    @State private var dictation = DreamDictation()
     @State private var text = ""
     @State private var noRecall = false
     @State private var assessment = JournalAssessment(requiredWords: 1)
@@ -27,7 +29,9 @@ struct JournalChallengeView: View {
     }
 
     /// While typing, drop the subtitle so the short Duo outer display (or landscape) keeps room to write.
-    private var compactHeader: Bool { focused && !text.isEmpty }
+    private var compactHeader: Bool { (focused || dictation.isActive) && !text.isEmpty }
+
+    private var signNames: [String] { signs.map(\.name) }
 
     var body: some View {
         // Laptop pose: the writing sits on the upper half, the keyboard on the lower.
@@ -49,7 +53,9 @@ struct JournalChallengeView: View {
             if text.isEmpty, Showcase.isActive { text = Showcase.dreamText }
             assessment = JournalAssessment(requiredWords: requirement.minimumWords)
             focused = true
+            if Showcase.screen == "wake-voice" { Task { await startDictation() } }
         }
+        .onDisappear { dictation.stop() }
     }
 
     private var content: some View {
@@ -62,6 +68,27 @@ struct JournalChallengeView: View {
                                 subtitle: compactHeader ? nil : "Where were you? Who was there? How did it feel?")
             }
 
+            if dictation.isActive {
+                voicePanel
+            } else {
+                editor
+            }
+
+            if case .unavailable(let message) = dictation.status {
+                Label(message, systemImage: "mic.slash")
+                    .font(.footnote)
+                    .foregroundStyle(Palette.ember)
+            }
+
+            progress
+
+            controls
+        }
+        .animation(.easeOut(duration: 0.2), value: compactHeader)
+        .animation(.smooth(duration: 0.3), value: dictation.isActive)
+    }
+
+    private var editor: some View {
             ZStack(alignment: .topLeading) {
                 TextEditor(text: $text)
                     .focused($focused)
@@ -82,7 +109,47 @@ struct JournalChallengeView: View {
             .frame(maxHeight: .infinity)
             .background(Palette.ink.opacity(0.5), in: .rect(cornerRadius: 24, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Palette.hairline))
+    }
 
+    /// Speaking: the transcript fills in live, with known dream signs highlighted.
+    private var voicePanel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        if text.isEmpty {
+                            Text(dictation.isListening ? "Listening… tell it before it fades." : "Paused")
+                                .font(.title3)
+                                .foregroundStyle(Palette.textTertiary)
+                        } else {
+                            HighlightedTranscript(text: text, signs: signNames)
+                        }
+                        Color.clear.frame(height: 1).id("end")
+                    }
+                    .padding(16)
+                }
+                .onChange(of: text) { proxy.scrollTo("end", anchor: .bottom) }
+            }
+            .frame(maxHeight: .infinity)
+            .background(Palette.ink.opacity(0.5), in: .rect(cornerRadius: 24, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Palette.iris.opacity(0.35)))
+
+            let heard = HighlightedTranscript.mentioned(signNames, in: text)
+            if !heard.isEmpty {
+                HStack(spacing: 6) {
+                    Text("HEARD")
+                        .font(.caption.weight(.semibold))
+                        .tracking(1.2)
+                        .foregroundStyle(Palette.textTertiary)
+                    ForEach(heard.prefix(4), id: \.self) { Chip(text: $0) }
+                }
+            }
+            DictationWaveform(levels: dictation.levels, tint: dictation.isListening ? Palette.iris : Palette.textTertiary)
+                .frame(maxWidth: .infinity)
+        }
+    }
+
+    private var progress: some View {
             VStack(alignment: .leading, spacing: 8) {
                 GoalBar(progress: assessment.progress)
                 HStack(alignment: .firstTextBaseline) {
@@ -101,7 +168,42 @@ struct JournalChallengeView: View {
                 .font(.subheadline)
             }
             .animation(.easeOut(duration: 0.2), value: assessment)
+    }
 
+    @ViewBuilder
+    private var controls: some View {
+        if dictation.isActive {
+            HStack(spacing: 12) {
+                Button {
+                    dictation.stop()
+                    focused = true
+                } label: {
+                    Text("Aa").font(.title3.weight(.bold))
+                }
+                .buttonStyle(.quiet)
+                .accessibilityLabel("Type instead")
+
+                Button {
+                    if dictation.isListening { dictation.pause() } else { dictation.resume() }
+                } label: {
+                    Image(systemName: dictation.isListening ? "pause.fill" : "mic.fill")
+                        .font(.title2)
+                        .foregroundStyle(Palette.ink)
+                        .frame(width: 64, height: 64)
+                        .background(Circle().fill(Palette.dawn))
+                        .shadow(color: Palette.dawn.opacity(0.4), radius: 14)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(dictation.isListening ? "Pause" : "Keep talking")
+
+                Button("Save") {
+                    dictation.stop()
+                    save()
+                }
+                .buttonStyle(.big(Palette.mint))
+                .disabled(!assessment.isAcceptable || saved)
+            }
+        } else {
             HStack(spacing: 12) {
                 Button(noRecall ? "I remember something" : "Can't remember") {
                     withAnimation(.smooth) { noRecall.toggle() }
@@ -109,12 +211,32 @@ struct JournalChallengeView: View {
                 .buttonStyle(.quiet)
                 .fixedSize()
 
+                if DreamDictation.isSupported || Showcase.isActive {
+                    Button { Task { await startDictation() } } label: {
+                        Image(systemName: "mic.fill")
+                            .font(.title3)
+                            .foregroundStyle(Palette.iris)
+                            .frame(width: 50, height: 50)
+                            .glassEffect(.regular.interactive(), in: .circle)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Speak your dream")
+                }
+
                 Button("Save", action: save)
                     .buttonStyle(.big(Palette.mint))
                     .disabled(!assessment.isAcceptable || saved)
             }
         }
-        .animation(.easeOut(duration: 0.2), value: compactHeader)
+    }
+
+    private func startDictation() async {
+        focused = false
+        dictation.onText = { heard in
+            text = heard
+            onActivity()
+        }
+        await dictation.start(appendingTo: text)
     }
 
     private func save() {

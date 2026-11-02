@@ -11,6 +11,7 @@ struct AlarmDraft {
     var chainMinutes = 15
     var gentleStartMinutes = 0
     var wakeCheck = false
+    var sleepSounds = false
     var bedtimeNudge = false
     var sleepGoalMinutes = 480
 
@@ -27,6 +28,7 @@ struct AlarmDraft {
         chainMinutes = alarm.chainMinutes
         gentleStartMinutes = alarm.gentleStartMinutes
         wakeCheck = alarm.wakeCheck
+        sleepSounds = alarm.sleepSounds
         bedtimeNudge = alarm.bedtimeNudge
         sleepGoalMinutes = alarm.sleepGoalMinutes
     }
@@ -59,6 +61,7 @@ struct AlarmDraft {
         alarm.chainMinutes = chainMinutes
         alarm.gentleStartMinutes = gentleStartMinutes
         alarm.wakeCheck = wakeCheck
+        alarm.sleepSounds = sleepSounds
         alarm.bedtimeNudge = bedtimeNudge
         alarm.sleepGoalMinutes = sleepGoalMinutes
         alarm.isEnabled = true
@@ -187,6 +190,10 @@ struct AlarmEditorView: View {
                 SmartWakeRow(symbol: "checkmark.circle.fill", tint: Palette.mint, title: "Wake-up check",
                              detail: "5 min after you finish, prove you're still up")
             }
+            Toggle(isOn: $draft.sleepSounds) {
+                SmartWakeRow(symbol: "cloud.rain.fill", tint: Palette.iris, title: "Sleep sounds → alarm",
+                             detail: "Fall asleep to rain; it rises into your alarm")
+            }
             Toggle(isOn: Binding(get: { draft.bedtimeNudge }, set: { on in
                 draft.bedtimeNudge = on
                 if on { Task { if !(await BedtimeNudges.requestPermission()) { draft.bedtimeNudge = false } } }
@@ -204,6 +211,8 @@ struct AlarmEditorView: View {
         } footer: {
             if draft.bedtimeNudge {
                 Text("A reminder 30 minutes before bedtime, counting 15 minutes to fall asleep.")
+            } else if draft.sleepSounds {
+                Text("Sounds start when you tap I'm going to bed in Tonight. Leave Dreamsign open or locked — not closed — overnight.")
             } else if draft.wakeCheck {
                 Text("The check is skipped if you're still using Dreamsign when it's due.")
             }

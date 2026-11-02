@@ -6,6 +6,7 @@ struct JournalView: View {
     @Environment(\.modelContext) private var context
     @State private var search = ""
     @State private var composing = false
+    @State private var showingWorld = Showcase.screen == "dream-world"
     @State private var selection: DreamEntry?
 
     /// Optional filter when opened from Insights.
@@ -95,6 +96,9 @@ struct JournalView: View {
             .searchable(text: $search, prompt: "Dreams, people, places")
             .toolbar {
                 if sign == nil {
+                    ToolbarItem(placement: .secondaryAction) {
+                        Button { showingWorld = true } label: { Label("Dream world", systemImage: "circle.hexagongrid") }
+                    }
                     ToolbarItem(placement: .primaryAction) {
                         Button { composing = true } label: { Label("New Entry", systemImage: "square.and.pencil") }
                     }
@@ -102,6 +106,16 @@ struct JournalView: View {
             }
             .sheet(isPresented: $composing) {
                 EntryEditorView(entry: nil)
+            }
+            .sheet(isPresented: $showingWorld) {
+                NavigationStack {
+                    DreamWorldView()
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button(role: .close) { showingWorld = false }
+                            }
+                        }
+                }
             }
     }
 

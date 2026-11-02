@@ -30,6 +30,8 @@ final class WakeFlowModel {
 
     func begin() async {
         guard !Showcase.isActive else { return }
+        // Morning: the night's audio is done. Lucid window: no cues while awake.
+        if session.kind == .wake { NightSession.shared.stop() } else { NightSession.shared.holdCues(for: 40 * 60) }
         await AlarmCoordinator.shared.beginWake(session.occurrence)
     }
 

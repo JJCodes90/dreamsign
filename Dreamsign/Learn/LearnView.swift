@@ -150,7 +150,7 @@ private struct LearnHero: View {
 
 private struct PracticeGrid: View {
     var onSelect: (PracticeAction) -> Void
-    private let items: [PracticeAction] = [.realityCheck, .mild, .ssild, .nightstand]
+    private let items: [PracticeAction] = [.realityCheck, .mild, .ssild, .cues, .nightstand]
 
     var body: some View {
         // A plain Grid: lazy grids inside List rows can send layout into a loop.
@@ -194,6 +194,7 @@ extension PracticeAction {
         case .ssild: String(localized: "SSILD")
         case .wbtb: String(localized: "Lucid window")
         case .nightstand: String(localized: "Nightstand")
+        case .cues: String(localized: "Lucidity cues")
         }
     }
 }
@@ -245,6 +246,8 @@ struct PracticeHost: View {
             }
         case .nightstand:
             NightstandView()
+        case .cues:
+            NavigationStack { CuesView() }
         case .wbtb:
             WBTBSettingsView(plan: model.wbtbPlan(context))
         case .journal, .dreamSigns:

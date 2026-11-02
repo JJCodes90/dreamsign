@@ -14,6 +14,7 @@ struct RootView: View {
                 ShowcaseRoot(screen: screen)
             } else if onboarded || Showcase.isActive {
                 TabView(selection: $model.tab) {
+                    Tab("Tonight", systemImage: "moon.fill", value: AppModel.Tab.tonight) { TonightView() }
                     Tab("Alarms", systemImage: "alarm.fill", value: AppModel.Tab.alarms) { AlarmsView() }
                     Tab("Journal", systemImage: "book.closed.fill", value: AppModel.Tab.journal) { JournalView() }
                     Tab("Insights", systemImage: "chart.bar.fill", value: AppModel.Tab.insights) { InsightsView() }

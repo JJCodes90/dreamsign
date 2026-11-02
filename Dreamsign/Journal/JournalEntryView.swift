@@ -156,6 +156,9 @@ struct EntryEditorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(role: .cancel) { dismiss() } }
+                if DreamDictation.isSupported {
+                    ToolbarItem(placement: .primaryAction) { DictationButton(text: $text) }
+                }
                 ToolbarItem(placement: .prominentConfirm) {
                     Button(role: .confirm, action: save)
                         .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

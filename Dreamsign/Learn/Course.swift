@@ -25,7 +25,7 @@ enum LessonBlock: Hashable, Sendable {
 
 /// Something you can do right after reading.
 enum PracticeAction: String, Hashable, Sendable {
-    case journal, dreamSigns, realityCheck, mild, ssild, wbtb, nightstand
+    case journal, dreamSigns, realityCheck, mild, ssild, wbtb, nightstand, cues
 
     var title: String {
         switch self {
@@ -36,6 +36,7 @@ enum PracticeAction: String, Hashable, Sendable {
         case .ssild: String(localized: "Try an SSILD session")
         case .wbtb: String(localized: "Plan a lucid window")
         case .nightstand: String(localized: "Open Nightstand")
+        case .cues: String(localized: "Set up lucidity cues")
         }
     }
 
@@ -48,6 +49,7 @@ enum PracticeAction: String, Hashable, Sendable {
         case .ssild: "eye"
         case .wbtb: "moon.stars"
         case .nightstand: "bed.double"
+        case .cues: "bell.and.waves.left.and.right"
         }
     }
 }

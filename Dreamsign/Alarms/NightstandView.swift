@@ -11,6 +11,7 @@ struct NightstandView: View {
     @Query private var alarms: [WakeAlarm]
     @State private var dimmed = false
     @State private var tonight: Occurrence?
+    @State private var night = NightSession.shared
 
     /// Warm, dim light at night is easier on sleepiness than bright blue-white.
     private let glow = Color(hex: 0xFF8A6B)
@@ -81,6 +82,17 @@ struct NightstandView: View {
                     .foregroundStyle(glow.opacity(0.5))
             }
 
+            if let plan = night.plan {
+                HStack(spacing: 14) {
+                    Label(nightSummary(plan), systemImage: plan.soundscape == .off ? "bell.and.waves.left.and.right" : plan.soundscape.symbol)
+                        .font(.subheadline)
+                        .foregroundStyle(glow.opacity(0.6))
+                    Button("Stop") { night.stop() }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(glow.opacity(0.8))
+                }
+            }
+
             if let plan = wbtbPlan {
                 if let tonight {
                     Button {
@@ -109,6 +121,25 @@ struct NightstandView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, Metrics.gutter)
+    }
+}
+
+extension NightstandView {
+    fileprivate func nightSummary(_ plan: NightPlan) -> String {
+        var parts: [String] = []
+        if plan.soundscape != .off {
+            if let rise = plan.riseInto {
+                parts.append(String(localized: "\(plan.soundscape.title) · rises into \(rise.formatted(date: .omitted, time: .shortened))"))
+            } else if plan.sleepTimerMinutes > 0 {
+                parts.append(String(localized: "\(plan.soundscape.title) · \(plan.sleepTimerMinutes) min"))
+            } else {
+                parts.append(plan.soundscape.title)
+            }
+        }
+        if let cues = plan.cues {
+            parts.append(String(localized: "cues from \(cues.start.formatted(date: .omitted, time: .shortened))"))
+        }
+        return parts.joined(separator: " · ")
     }
 }
 
