@@ -96,16 +96,22 @@ jobs:
           APP="$RUNNER_TEMP/Dreamsign.xcarchive/Products/Applications/Dreamsign.app"
           test -d "$APP"
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" -c "Print :MinimumOSVersion" -c "Print :NSAlarmKitUsageDescription" "$APP/Info.plist"
+          ls "$APP/PlugIns" || true
           mkdir -p ipa/Payload
           cp -R "$APP" ipa/Payload/
           (cd ipa && zip -qry ../Dreamsign.ipa Payload)
-          ls -lh Dreamsign.ipa
+          # Lite: no widget extension, for sideloading tools that trip on extensions.
+          rm -rf ipa/Payload/Dreamsign.app/PlugIns
+          (cd ipa && zip -qry ../Dreamsign-lite.ipa Payload)
+          ls -lh Dreamsign.ipa Dreamsign-lite.ipa
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: Dreamsign-ipa
-          path: Dreamsign.ipa
+          path: |
+            Dreamsign.ipa
+            Dreamsign-lite.ipa
           retention-days: 30
 
       - name: Upload archive log

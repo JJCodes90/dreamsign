@@ -100,6 +100,27 @@ Before testing on the device, use the **iPhone Duo** simulator in Xcode 27.1's D
 - **Tent / landscape** on the nightstand: the alarm alert and the wake flow both work.
 - **Note** any pose where something lands in the crease or gets cut off.
 
+### 14. ⚑ Smart wake
+- **Gentle start** (Edit Alarm → Smart wake): a soft Sunrise ring 10 min early. Tap Stop and confirm the real alarm still rings on time. Note whether the sound plays at all — custom sounds are the least dependable part of AlarmKit.
+- **Wake-up check**: finish the challenges, lock the phone, wait 5 min. "Still up?" should ring; tap I'm up and tap the three dots. Then repeat but keep using the app: the check should quietly skip.
+- **Bedtime nudge**: set a goal, wait for the reminder 30 min before bedtime.
+
+### 15. New challenges
+- **Walk**: allow Motion & Fitness, walk 30 steps. Steps arrive in bursts every few seconds. With Motion access off it should switch to shaking.
+- **Scan a code**: register a barcode in another room, then scan it in the morning. A different code is rejected. With the camera denied, it falls back to math.
+- **Type a phrase / Memory**: quick checks that typos stop progress and a wrong tile plays a new pattern.
+
+### 16. ⚑ A whole night
+1. In **Tonight**, pick Rain, turn on **Rise into my alarm**, add a lucid window, and turn on cues (after training once in Learn → Lucidity cues).
+2. Tap **I'm going to bed** and lock the phone on the charger.
+3. Morning: did the rain play, did cues sound faint (or did they wake you?), and did the lead-in rise before the alarm?
+4. Leave Dreamsign in the background, not force-quit — closing it stops the sounds.
+
+### 17. Voice journal, suggestions, widgets
+- Speak a dream in the wake journal (mic button). Known dream signs light up as you talk. On the Duo open, the right page fills in as you speak.
+- Open the entry: **Possible dream signs** suggests a title and signs (Apple Intelligence when it's on, otherwise word rules).
+- Add the **Next alarm**, **Tonight** and **Reality check** widgets and the Control Center controls. With a free-account sideload, widgets may show "No alarm set": they need the App Group, which only a proper signed build gets. Controls and Siri ("Log a dream in Dreamsign") work either way. If installing fails, try **Dreamsign-lite.ipa** (no widgets).
+
 ## Simulator notes
 
 - The Shake challenge shows a **Count a shake** button on the simulator.
@@ -108,4 +129,4 @@ Before testing on the device, use the **iPhone Duo** simulator in Xcode 27.1's D
 
 ## Reporting back
 
-Send me the results for **3, 4, 5, 9 and 13**, plus anything that looked off. These decide the default sound, the ring interval and the shake threshold.
+Send me the results for **3, 4, 5, 9, 13, 14 and 16**, plus anything that looked off. These decide the default sound, the ring interval and the shake threshold.

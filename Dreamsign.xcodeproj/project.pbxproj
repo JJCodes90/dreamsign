@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		DA510000000000000000002C /* DreamsignWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DA5100000000000000000020 /* DreamsignWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		DA5100000000000000000010 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -14,20 +18,51 @@
 			remoteGlobalIDString = DA5100000000000000000008;
 			remoteInfo = Dreamsign;
 		};
+		DA510000000000000000002E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DA5100000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DA5100000000000000000024;
+			remoteInfo = DreamsignWidgets;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DA510000000000000000002B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				DA510000000000000000002C /* DreamsignWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		DA5100000000000000000006 /* Dreamsign.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Dreamsign.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA5100000000000000000007 /* DreamsignTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DreamsignTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DA5100000000000000000020 /* DreamsignWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DreamsignWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		DA5100000000000000000012 /* Exceptions for "Dreamsign" folder in "Dreamsign" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Dreamsign.entitlements,
 				Info.plist,
 			);
 			target = DA5100000000000000000008 /* Dreamsign */;
+		};
+		DA5100000000000000000022 /* Exceptions for "DreamsignWidgets" folder in "DreamsignWidgets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				DreamsignWidgets.entitlements,
+				Info.plist,
+			);
+			target = DA5100000000000000000024 /* DreamsignWidgets */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -43,6 +78,19 @@
 		DA5100000000000000000005 /* DreamsignTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = DreamsignTests;
+			sourceTree = "<group>";
+		};
+		DA5100000000000000000021 /* DreamsignWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				DA5100000000000000000022 /* Exceptions for "DreamsignWidgets" folder in "DreamsignWidgets" target */,
+			);
+			path = DreamsignWidgets;
+			sourceTree = "<group>";
+		};
+		DA5100000000000000000023 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -62,6 +110,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DA5100000000000000000027 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -69,6 +124,8 @@
 			isa = PBXGroup;
 			children = (
 				DA5100000000000000000004 /* Dreamsign */,
+				DA5100000000000000000023 /* Shared */,
+				DA5100000000000000000021 /* DreamsignWidgets */,
 				DA5100000000000000000005 /* DreamsignTests */,
 				DA5100000000000000000003 /* Products */,
 			);
@@ -79,6 +136,7 @@
 			children = (
 				DA5100000000000000000006 /* Dreamsign.app */,
 				DA5100000000000000000007 /* DreamsignTests.xctest */,
+				DA5100000000000000000020 /* DreamsignWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -93,13 +151,16 @@
 				DA510000000000000000000A /* Sources */,
 				DA510000000000000000000B /* Frameworks */,
 				DA510000000000000000000C /* Resources */,
+				DA510000000000000000002B /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				DA510000000000000000002D /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				DA5100000000000000000004 /* Dreamsign */,
+				DA5100000000000000000023 /* Shared */,
 			);
 			name = Dreamsign;
 			packageProductDependencies = (
@@ -131,6 +192,29 @@
 			productReference = DA5100000000000000000007 /* DreamsignTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		DA5100000000000000000024 /* DreamsignWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DA5100000000000000000025 /* Build configuration list for PBXNativeTarget "DreamsignWidgets" */;
+			buildPhases = (
+				DA5100000000000000000026 /* Sources */,
+				DA5100000000000000000027 /* Frameworks */,
+				DA5100000000000000000028 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				DA5100000000000000000021 /* DreamsignWidgets */,
+				DA5100000000000000000023 /* Shared */,
+			);
+			name = DreamsignWidgets;
+			packageProductDependencies = (
+			);
+			productName = DreamsignWidgets;
+			productReference = DA5100000000000000000020 /* DreamsignWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -147,6 +231,9 @@
 					DA5100000000000000000009 = {
 						CreatedOnToolsVersion = 26.0;
 						TestTargetID = DA5100000000000000000008;
+					};
+					DA5100000000000000000024 = {
+						CreatedOnToolsVersion = 26.0;
 					};
 				};
 			};
@@ -165,6 +252,7 @@
 			projectRoot = "";
 			targets = (
 				DA5100000000000000000008 /* Dreamsign */,
+				DA5100000000000000000024 /* DreamsignWidgets */,
 				DA5100000000000000000009 /* DreamsignTests */,
 			);
 		};
@@ -179,6 +267,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		DA510000000000000000000F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DA5100000000000000000028 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -202,6 +297,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DA5100000000000000000026 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -209,6 +311,11 @@
 			isa = PBXTargetDependency;
 			target = DA5100000000000000000008 /* Dreamsign */;
 			targetProxy = DA5100000000000000000010 /* PBXContainerItemProxy */;
+		};
+		DA510000000000000000002D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DA5100000000000000000024 /* DreamsignWidgets */;
+			targetProxy = DA510000000000000000002E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -337,6 +444,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Dreamsign/Dreamsign.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
@@ -372,6 +480,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Dreamsign/Dreamsign.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
@@ -442,6 +551,60 @@
 			};
 			name = Release;
 		};
+		DA5100000000000000000029 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = DreamsignWidgets/DreamsignWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DreamsignWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Dreamsign;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jjcodes.dreamsign.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		DA510000000000000000002A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = DreamsignWidgets/DreamsignWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DreamsignWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Dreamsign;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jjcodes.dreamsign.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -468,6 +631,15 @@
 			buildConfigurations = (
 				DA510000000000000000001A /* Debug */,
 				DA510000000000000000001B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DA5100000000000000000025 /* Build configuration list for PBXNativeTarget "DreamsignWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DA5100000000000000000029 /* Debug */,
+				DA510000000000000000002A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -4,6 +4,7 @@ import SwiftUI
 struct JournalView: View {
     @Query(sort: \DreamEntry.createdAt, order: .reverse) private var entries: [DreamEntry]
     @Environment(\.modelContext) private var context
+    @Environment(AppModel.self) private var model
     @State private var search = ""
     @State private var composing = false
     @State private var showingWorld = Showcase.screen == "dream-world"
@@ -104,8 +105,11 @@ struct JournalView: View {
                     }
                 }
             }
-            .sheet(isPresented: $composing) {
-                EntryEditorView(entry: nil)
+            .sheet(isPresented: $composing, onDismiss: { model.composeByVoice = false }) {
+                EntryEditorView(entry: nil, startsDictating: model.composeByVoice)
+            }
+            .onChange(of: model.composeByVoice, initial: true) { _, voice in
+                if voice, sign == nil { composing = true }
             }
             .sheet(isPresented: $showingWorld) {
                 NavigationStack {

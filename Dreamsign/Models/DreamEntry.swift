@@ -102,6 +102,8 @@ final class DreamEntry {
     var isNightmare: Bool = false
     /// Technique practiced the night this dream happened ("" = none).
     var techniqueRaw: String = ""
+    /// A title chosen for the dream (e.g. a suggested one); "" = use the first line.
+    var customTitle: String = ""
 
     init(text: String, createdAt: Date = .now, isNoRecall: Bool = false, source: EntrySource = .manual) {
         id = UUID()
@@ -122,6 +124,7 @@ final class DreamEntry {
     var technique: WBTBTechnique? { WBTBTechnique(rawValue: techniqueRaw) }
 
     var title: String {
+        if !customTitle.isEmpty { return customTitle }
         let firstLine = text.split(whereSeparator: \.isNewline).first.map(String.init) ?? ""
         return firstLine.trimmingCharacters(in: .whitespaces)
     }

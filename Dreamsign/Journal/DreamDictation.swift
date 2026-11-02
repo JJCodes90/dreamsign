@@ -260,6 +260,7 @@ struct HighlightedTranscript: View {
 /// A microphone toggle that appends dictation to a text binding (journal editor).
 struct DictationButton: View {
     @Binding var text: String
+    var autoStart = false
     @State private var dictation = DreamDictation()
 
     var body: some View {
@@ -275,6 +276,11 @@ struct DictationButton: View {
                 .symbolEffect(.pulse, isActive: dictation.isListening)
         }
         .accessibilityLabel(dictation.isActive ? Text("Stop dictation") : Text("Dictate"))
+        .task {
+            guard autoStart, !dictation.isActive else { return }
+            dictation.onText = { text = $0 }
+            await dictation.start(appendingTo: text)
+        }
         .onDisappear { dictation.stop() }
     }
 }

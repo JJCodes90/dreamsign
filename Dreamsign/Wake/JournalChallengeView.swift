@@ -17,6 +17,8 @@ struct JournalChallengeView: View {
     @State private var assessment = JournalAssessment(requiredWords: 1)
     @State private var saved = false
     @FocusState private var focused: Bool
+    /// Two-page morning (iPhone Duo open): choices made on the right-hand page.
+    @State private var pageChoices = MorningChoices()
 
     /// Created after the first frame: loading the dictionaries can take a moment.
     @State private var validator: JournalValidator?
@@ -34,10 +36,30 @@ struct JournalChallengeView: View {
     private var signNames: [String] { signs.map(\.name) }
 
     var body: some View {
-        // Laptop pose: the writing sits on the upper half, the keyboard on the lower.
-        FoldAvoiding(tabletop: .top) {
-            content
-                .readableWidth()
+        GeometryReader { proxy in
+            let fold = FoldGeometry.activeFold(in: proxy)
+            let laptop = fold.map { $0.width > $0.height } ?? false
+            if !laptop, !noRecall, FoldGeometry.isWide(proxy.size, minimumSideWidth: 340) {
+                // Open like a book: write or speak on the left; the right page fills in as you go.
+                ArrangementView {
+                    content
+                } secondary: {
+                    MorningSidePage(text: text, signs: signs, source: source, choices: $pageChoices,
+                                    canSave: assessment.isAcceptable && !saved) {
+                        dictation.stop()
+                        save()
+                    }
+                }
+                .arrangementViewStyle(.split)
+                .frame(width: proxy.size.width, height: proxy.size.height)
+            } else {
+                // Laptop pose: the writing sits on the upper half, the keyboard on the lower.
+                FoldAvoiding(tabletop: .top) {
+                    content
+                        .readableWidth()
+                }
+                .frame(width: proxy.size.width, height: proxy.size.height)
+            }
         }
         .sensoryFeedback(.success, trigger: assessment.isAcceptable) { _, acceptable in acceptable }
         .task(id: ValidationKey(text: text, noRecall: noRecall)) {
@@ -244,6 +266,7 @@ struct JournalChallengeView: View {
         saved = true
         let entry = DreamEntry(text: text.trimmingCharacters(in: .whitespacesAndNewlines), isNoRecall: noRecall, source: source)
         context.insert(entry)
+        if !noRecall { pageChoices.apply(to: entry, text: text, signs: signs, context: context) }
         try? context.save()
         UserDefaults.standard.removeObject(forKey: draftDefaultsKey)
         focused = false

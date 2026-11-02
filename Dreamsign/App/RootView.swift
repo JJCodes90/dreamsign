@@ -22,6 +22,9 @@ struct RootView: View {
                 }
                 .tabBarMinimizeBehavior(.onScrollDown)
                 .tracksTouches()
+                .fullScreenCover(item: $model.presentedPractice) { action in
+                    PracticeHost(action: action)
+                }
                 .fullScreenCover(item: $model.wake) { session in
                     WakeFlowView(session: session)
                 }
@@ -43,6 +46,10 @@ struct RootView: View {
             default: break
             }
         }
+        .onChange(of: AppRouter.shared.route) { _, route in
+            if route != nil, let next = AppRouter.shared.take() { model.handle(next) }
+        }
+        .onOpenURL { model.handle($0) }
         .onChange(of: model.coordinator.alertingIDs) { _, ringing in
             if !ringing.isEmpty { model.presentWakeIfNeeded(context) }
         }

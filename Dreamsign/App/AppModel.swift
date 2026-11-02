@@ -23,6 +23,10 @@ final class AppModel {
     var wakeFinishedAt: Date?
     /// The armed wake-up check, shown on the finish screen.
     var pendingCheck: Occurrence?
+    /// A practice tool opened from a widget, control or shortcut.
+    var presentedPractice: PracticeAction?
+    /// Ask the journal to start a new entry by voice.
+    var composeByVoice = false
     let coordinator = AlarmCoordinator.shared
     @ObservationIgnored private var checkSkipTask: Task<Void, Never>?
 
@@ -33,6 +37,34 @@ final class AppModel {
             await coordinator.update(specs: allAlarms(context).map(\.spec))
         }
         await BedtimeNudges.sync(allAlarms(context))
+        WidgetSync.update(context, coordinator: coordinator)
+    }
+
+    // MARK: Routes from widgets, controls, Siri and links
+
+    func handle(_ route: AppRoute) {
+        guard wake == nil else { return }
+        switch route {
+        case .tonight: tab = .tonight
+        case .journal: tab = .journal
+        case .recordDream:
+            tab = .journal
+            composeByVoice = true
+        case .realityCheck:
+            presentedPractice = .realityCheck
+        }
+    }
+
+    func handle(_ url: URL) {
+        guard url.scheme == "dreamsign" else { return }
+        switch url.host() {
+        case "tonight": handle(.tonight)
+        case "journal": handle(.journal)
+        case "record": handle(.recordDream)
+        case "reality": handle(.realityCheck)
+        case "alarms": tab = .alarms
+        default: break
+        }
     }
 
     /// Shows the wake flow if an alarm is (or just was) ringing. A finished flow left on screen
@@ -90,6 +122,7 @@ final class AppModel {
         guard !Showcase.isActive else { return }
         await syncAlarms(context)
         presentWakeIfNeeded(context)
+        if let route = AppRouter.shared.take() { handle(route) }
     }
 
     nonisolated static func scheduleBackgroundRefresh() {

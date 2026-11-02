@@ -45,12 +45,16 @@ struct InsightsView: View {
             StatTile(value: "\(entries.filter(\.isLucid).count)", label: String(localized: "Lucid"))
             StatTile(value: recallRateText, label: String(localized: "Recall"))
         }
+        DreamCalendarCard(entries: entries)
+        MilestonesRow(facts: facts)
     }
 
     @ViewBuilder
     private var patternCards: some View {
         WeeklyChart(buckets: JournalStats.entriesPerWeek(entries.map(\.createdAt), weeks: 8,
                                                          now: .now, calendar: calendar))
+        SleepCard(facts: facts)
+        DreamWorldLink(signCount: signs.filter { !$0.entries.isEmpty }.count)
         TopSigns(signs: signs)
         TechniqueCard(entries: entries)
     }

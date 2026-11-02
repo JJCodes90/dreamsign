@@ -159,6 +159,10 @@ struct ShowcaseRoot: View {
             WakeFlowView(session: wakeSession, startIndex: 4, savedEntry: entries.first)
         case "wake-voice":
             WakeFlowView(session: wakeSession, startIndex: 1)
+        case "smart-signs":
+            if let entry = entries.first {
+                NavigationStack { JournalEntryView(entry: entry) }
+            }
         case "cues":
             NavigationStack { CuesView() }
         case "wake-steps":

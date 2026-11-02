@@ -146,7 +146,10 @@ struct RealityCheckView: View {
                 .buttonStyle(.big(Palette.iris))
         } else {
             Button(step == .context ? "Finish check" : "Next") {
-                if step == .context { total += 1 }
+                if step == .context {
+                    total += 1
+                    SharedStore.logRealityCheck()
+                }
                 if let next = Step(rawValue: step.rawValue + 1) { step = next }
             }
             .buttonStyle(.big(Palette.iris))

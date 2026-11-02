@@ -19,13 +19,21 @@ An alarm for deep sleepers that doubles as a lucid-dreaming practice. It keeps r
 | **Learn** | A 13-lesson lucid dreaming course with a cited source behind every claim: recall, dream signs, reality testing, MILD, WBTB, SSILD, staying lucid, nightmares, sleep paralysis, safety, and current research. |
 | **Practice** | An interactive reality-check trainer (with optional daytime reminders), guided SSILD and MILD sessions with on-device voice guidance, and a generated brown-noise soundscape for falling back asleep. |
 | **Nightstand** | A dim, warm bedside clock with bedtime controls. On iPhone Duo standing like a laptop, the clock sits above the fold and the controls below. |
+| **Smart wake** | Gentle start (a soft ring before the alarm), a "Still up?" wake-up check 5 min after you finish, bedtime nudges for a sleep goal, and sleep sounds that rise into the alarm. More challenges: Walk (steps), Scan a code, Type a phrase, Memory. |
+| **Tonight** | Bedtimes for 4–6 full sleep cycles, a sketch of the night, sleep sounds (rain, ocean, brown noise), tonight's intention from your top dream sign, and one "I'm going to bed" button. |
+| **Lucidity cues** | Experimental, after targeted lucidity reactivation (Carr et al., 2020): train a soft sound at bedtime; it plays at a whisper in the last two hours before the alarm and pauses after movement. |
+| **Voice journal** | Speak your dream; on-device speech recognition, with known dream signs highlighted live. |
+| **Smart signs** | Suggested titles and dream signs for each entry, from Apple Intelligence on the iPhone, or word rules without it. |
+| **Dream world** | A star map of your dream signs, sized by frequency and linked when they share a dream. |
+| **Insights v2** | A month calendar of recall and lucid mornings, milestones, and optional sleep and REM from Apple Health. |
+| **Widgets & controls** | Next alarm, Tonight, and an interactive reality-check widget; Control Center controls; Siri and Shortcuts ("Log a dream in Dreamsign"). |
 
 ## iPhone Duo
 
 | Pose | What Dreamsign does |
 |---|---|
 | **Closed** (outer display) | Compact layouts sized for the wider, shorter screen. Toolbar items carry an icon and a title, so the system can move them into the vertical side bar. |
-| **Open** (inner display) | Alarms and Insights become two columns. Journal becomes a split view (entries beside the open entry). The wake flow puts the problem beside the keypad, and the orb beside the MILD cue. |
+| **Open** (inner display) | Alarms and Insights become two columns. Journal becomes a split view (entries beside the open entry). The wake flow puts the problem beside the keypad, and the orb beside the MILD cue. The morning journal becomes two pages: write or speak on the left; signs, vividness and what's next fill in on the right. |
 | **Folded like a book** | Each half of a screen sits on its own side of the crease, using `ArrangementView` and the fold's reserved region. Single-purpose screens move to the trailing side. |
 | **Folded like a laptop** (on a table) | Things to look at go on the top half, things to tap on the bottom: the keypad sits on the stable base. While journaling, the text stays above the fold and the keyboard sits below. |
 | **Rotated / tent** | Landscape is supported. The inner display ignores orientation locks, so every layout is size-driven, never orientation-driven. |

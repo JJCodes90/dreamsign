@@ -15,9 +15,14 @@ struct JournalEntryView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 26) {
                 VStack(alignment: .leading, spacing: 6) {
+                    if !entry.customTitle.isEmpty {
+                        Text(entry.customTitle)
+                            .font(.title.weight(.bold))
+                            .foregroundStyle(Palette.text)
+                    }
                     Text(entry.createdAt.formatted(.dateTime.weekday(.wide).month(.wide).day()))
-                        .font(.title2.weight(.bold))
-                        .foregroundStyle(Palette.text)
+                        .font(entry.customTitle.isEmpty ? .title2.weight(.bold) : .headline)
+                        .foregroundStyle(entry.customTitle.isEmpty ? Palette.text : Palette.textSecondary)
                     Text(subtitle)
                         .font(.subheadline)
                         .foregroundStyle(Palette.textSecondary)
@@ -53,6 +58,7 @@ struct JournalEntryView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 if !entry.isNoRecall {
+                    SuggestedSignsCard(entry: entry)
                     EntryDetailsCard(entry: entry) { try? context.save() }
                 }
 
@@ -117,6 +123,7 @@ struct JournalEntryView: View {
 
 struct EntryEditorView: View {
     let entry: DreamEntry?
+    var startsDictating = false
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
@@ -126,8 +133,9 @@ struct EntryEditorView: View {
     @State private var isNoRecall: Bool
     @FocusState private var focused: Bool
 
-    init(entry: DreamEntry?) {
+    init(entry: DreamEntry?, startsDictating: Bool = false) {
         self.entry = entry
+        self.startsDictating = startsDictating
         _text = State(initialValue: entry?.text ?? "")
         _createdAt = State(initialValue: entry?.createdAt ?? .now)
         _isLucid = State(initialValue: entry?.isLucid ?? false)
@@ -157,14 +165,14 @@ struct EntryEditorView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(role: .cancel) { dismiss() } }
                 if DreamDictation.isSupported {
-                    ToolbarItem(placement: .primaryAction) { DictationButton(text: $text) }
+                    ToolbarItem(placement: .primaryAction) { DictationButton(text: $text, autoStart: startsDictating) }
                 }
                 ToolbarItem(placement: .prominentConfirm) {
                     Button(role: .confirm, action: save)
                         .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
-            .onAppear { if entry == nil { focused = true } }
+            .onAppear { if entry == nil, !startsDictating { focused = true } }
         }
     }
 
@@ -204,6 +212,11 @@ struct SignTaggerView: View {
     var body: some View {
         NavigationStack {
             List {
+                if trimmed.isEmpty, !entry.isNoRecall {
+                    SuggestedSignsCard(entry: entry)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                }
                 if canCreate {
                     Section("New dream sign") {
                         Picker("Kind", selection: $category) {
