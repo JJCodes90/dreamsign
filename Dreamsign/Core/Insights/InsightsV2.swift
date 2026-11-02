@@ -4,7 +4,7 @@ import Foundation
 
 /// One day on the dream calendar.
 enum RecallLevel: Int, Comparable, Sendable {
-    case none, fragment, full, lucid
+    case empty, fragment, full, lucid
 
     static func < (lhs: RecallLevel, rhs: RecallLevel) -> Bool { lhs.rawValue < rhs.rawValue }
 }
@@ -34,14 +34,14 @@ enum DreamCalendar {
             let day = JournalStats.morning(of: fact.date, calendar: calendar)
             let level: RecallLevel = fact.lucid ? .lucid : !fact.recalled ? .fragment
                 : fact.words >= fullDreamWords ? .full : .fragment
-            levels[day] = max(levels[day] ?? .none, level)
+            levels[day] = max(levels[day] ?? .empty, level)
         }
         let first = interval.start
         let leading = (calendar.component(.weekday, from: first) - calendar.firstWeekday + 7) % 7
         var days: [DreamDay?] = Array(repeating: nil, count: leading)
         var day = first
         while day < interval.end {
-            days.append(DreamDay(date: day, level: levels[calendar.startOfDay(for: day)] ?? .none))
+            days.append(DreamDay(date: day, level: levels[calendar.startOfDay(for: day)] ?? .empty))
             guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
             day = next
         }

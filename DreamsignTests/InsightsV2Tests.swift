@@ -50,7 +50,7 @@ struct DreamCalendarTests {
         #expect(days.prefix(1).allSatisfy { $0 != nil })          // no leading blanks
         #expect(days.compactMap { $0 }.count == 30)
         let level = { (day: Int) in days.compactMap { $0 }[day - 1].level }
-        #expect(level(1) == .none)
+        #expect(level(1) == .empty)
         #expect(level(2) == .full)
         #expect(level(3) == .lucid)
         #expect(level(4) == .fragment)

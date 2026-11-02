@@ -73,7 +73,7 @@ struct DreamCalendarCard: View {
         let isToday = calendar.isDateInToday(day.date)
         return Text("\(calendar.component(.day, from: day.date))")
             .font(.caption.weight(day.level == .lucid ? .bold : .semibold).monospacedDigit())
-            .foregroundStyle(day.level == .lucid ? Palette.ink : day.level == .none ? Palette.textTertiary : Palette.text)
+            .foregroundStyle(day.level == .lucid ? Palette.ink : day.level == .empty ? Palette.textTertiary : Palette.text)
             .frame(maxWidth: .infinity, minHeight: 34)
             .background(fill(day.level), in: .rect(cornerRadius: 9, style: .continuous))
             .overlay {
@@ -86,7 +86,7 @@ struct DreamCalendarCard: View {
 
     private func fill(_ level: RecallLevel) -> Color {
         switch level {
-        case .none: Palette.surfaceRaised.opacity(0.6)
+        case .empty: Palette.surfaceRaised.opacity(0.6)
         case .fragment: Palette.iris.opacity(0.22)
         case .full: Palette.iris.opacity(0.48)
         case .lucid: Palette.iris
