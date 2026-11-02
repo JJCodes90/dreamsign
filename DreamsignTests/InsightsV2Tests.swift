@@ -92,7 +92,8 @@ struct MilestoneTests {
     @Test func highlightsLeaveRoomForTheNextGoal() {
         let highlights = Milestones.highlights(mornings(12, lucidEvery: 4), calendar: calendar)
         #expect(highlights.count == 3)
-        #expect(highlights.prefix(2).allSatisfy(\.isAchieved))
+        let firstTwoAchieved = highlights.prefix(2).allSatisfy { $0.isAchieved }
+        #expect(firstTwoAchieved)
         #expect(highlights.last?.isAchieved == false)
         #expect(Milestones.highlights([], calendar: calendar).allSatisfy { !$0.isAchieved })
     }
