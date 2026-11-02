@@ -31,6 +31,16 @@ struct ShakeDetector: Sendable {
         return false
     }
 
+    /// Sensitivity 0…1 → detector. 0 needs a vigorous shake (1.7 g), 1 counts a gentle
+    /// wobble (0.6 g). The default, 0.6, is about 1.04 g.
+    init(sensitivity: Double) {
+        let s = min(max(sensitivity, 0), 1)
+        let threshold = 1.7 - 1.1 * s
+        self.init(threshold: threshold, release: threshold * 0.45, minimumInterval: 0.15)
+    }
+
+    static let defaultSensitivity = 0.6
+
     static func magnitude(x: Double, y: Double, z: Double) -> Double {
         (x * x + y * y + z * z).squareRoot()
     }

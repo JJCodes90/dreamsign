@@ -17,7 +17,7 @@ enum AlarmSound: String, CaseIterable, Identifiable, Codable, Sendable {
 
     var detail: String {
         switch self {
-        case .system: String(localized: "The system alarm")
+        case .system: String(localized: "The system alarm · most dependable")
         case .dawn: String(localized: "Soft chimes that slowly rise")
         case .tide: String(localized: "Warm, steady, insistent")
         case .beacon: String(localized: "Loud — for very deep sleep")

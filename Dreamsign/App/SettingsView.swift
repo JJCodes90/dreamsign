@@ -46,6 +46,15 @@ struct SettingsView: View {
                     }
                 }
 
+                Section {
+                    explainer("speaker.wave.3", "Turn Ringer and Alerts up high: Settings › Sounds & Haptics. Alarms play at that volume, and iOS doesn't let apps change it.")
+                    explainer("hand.tap", "Turn off \"Change with Buttons\" there too, so the volume buttons can't quietly lower your alarm.")
+                    explainer("bell.badge", "Use the Classic sound for anything you must wake to. Custom sounds can play only once, or quietly, on some iOS versions.")
+                    explainer("lock.iphone", "Use \"Test in 10 seconds\" on an alarm with Silent mode on and the phone locked to check it.")
+                } header: {
+                    Text("Make sure you hear it")
+                }
+
                 Section("How it works") {
                     explainer("bell.and.waves.left.and.right", "iOS always shows a Stop button on alarms. Dreamsign schedules a follow-up ring every minute, so Stop only buys a minute.")
                     explainer("checkmark.seal", "Finishing your challenges in the app ends the chain.")

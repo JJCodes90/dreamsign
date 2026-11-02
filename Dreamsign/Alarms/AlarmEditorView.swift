@@ -107,7 +107,7 @@ struct AlarmEditorView: View {
                         ForEach(AlarmDraft.chainOptions, id: \.self) { Text("\($0) min").tag($0) }
                     }
                 } footer: {
-                    Text("Stopping it without finishing won't work — it rings again every minute until you're done. After 5 minutes it gets louder.")
+                    Text("Stopping it without finishing won't work — it rings again every minute, with the system alarm sound, until you're done.")
                 }
 
                 Section {
@@ -283,7 +283,23 @@ struct ChallengeSettingsView: View {
                 } header: {
                     Text("Shakes")
                 } footer: {
-                    Text("A brisk shake counts about six per second. Getting your body moving cuts through grogginess.")
+                    Text("Getting your body moving cuts through grogginess.")
+                }
+                Section {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Slider(value: $challenge.shakeSensitivity, in: 0...1)
+                            .tint(Palette.dawn)
+                        HStack {
+                            Text("Hard shake").font(.caption).foregroundStyle(Palette.textTertiary)
+                            Spacer()
+                            Text("Gentle wobble").font(.caption).foregroundStyle(Palette.textTertiary)
+                        }
+                    }
+                    ShakeTester(sensitivity: challenge.shakeSensitivity)
+                } header: {
+                    Text("Sensitivity")
+                } footer: {
+                    Text("Try it: shake your phone and watch the count. Slide toward gentle if it feels like hard work.")
                 }
             case .math:
                 Section {
@@ -331,4 +347,36 @@ struct ChallengeSettingsView: View {
         .environment(AppModel())
         .modelContainer(PreviewData.container)
         .preferredColorScheme(.dark)
+}
+
+/// Live shake counter for tuning sensitivity in settings.
+private struct ShakeTester: View {
+    let sensitivity: Double
+    @State private var monitor: ShakeMonitor?
+
+    var body: some View {
+        HStack {
+            Label("Test shakes", systemImage: "iphone.gen3.radiowaves.left.and.right")
+                .foregroundStyle(Palette.text)
+            Spacer()
+            Text("\(monitor?.count ?? 0)")
+                .font(.title3.monospacedDigit().weight(.semibold))
+                .foregroundStyle(Palette.dawn)
+                .contentTransition(.numericText())
+                .animation(.snappy, value: monitor?.count)
+            Button("Reset") { restart() }
+                .buttonStyle(.borderless)
+        }
+        .sensoryFeedback(.impact(weight: .light), trigger: monitor?.count)
+        .onAppear { restart() }
+        .onDisappear { monitor?.stop() }
+        .onChange(of: sensitivity) { restart() }
+    }
+
+    private func restart() {
+        monitor?.stop()
+        let fresh = ShakeMonitor(sensitivity: sensitivity)
+        fresh.start()
+        monitor = fresh
+    }
 }

@@ -102,6 +102,14 @@ struct ShakeDetectorTests {
         #expect(second)
     }
 
+    @Test func sensitivityChangesWhatCounts() {
+        let gentle = samples(hertz: 3, amplitude: 1.0, seconds: 3)
+        #expect(count(gentle, detector: ShakeDetector(sensitivity: 0)) == 0)
+        #expect(count(gentle, detector: ShakeDetector(sensitivity: 1)) > 10)
+        let atDefault = count(samples(hertz: 3, amplitude: 1.4, seconds: 3), detector: ShakeDetector(sensitivity: ShakeDetector.defaultSensitivity))
+        #expect(atDefault > 10)
+    }
+
     @Test func magnitudeIsEuclidean() {
         #expect(ShakeDetector.magnitude(x: 3, y: 4, z: 0) == 5)
     }

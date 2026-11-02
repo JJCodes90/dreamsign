@@ -30,7 +30,7 @@ struct SoundPickerView: View {
                     .accessibilityAddTraits(sound == selection ? .isSelected : [])
                 }
             } footer: {
-                Text("Alarms play at your ringer volume — keep it up. Follow-up rings switch to Beacon after 5 minutes.")
+                Text("Alarms play at your Ringer and Alerts volume — iOS doesn't let apps raise it. Classic is the system alarm sound and the most dependable; custom sounds can play only once, or quietly, on some iOS versions. Follow-up rings always use Classic.")
             }
         }
         .scrollContentBackground(.hidden)

@@ -39,6 +39,8 @@ struct Challenge: Codable, Hashable, Identifiable, Sendable {
     var id = UUID()
     var kind: Kind
     var shakeCount = 50
+    /// 0 = needs a hard shake … 1 = a gentle wobble counts.
+    var shakeSensitivity = ShakeDetector.defaultSensitivity
     var mathDifficulty: MathDifficulty = .medium
     var mathProblems = 3
     var journalWords = JournalRequirement.dream.minimumWords
@@ -54,13 +56,14 @@ struct Challenge: Codable, Hashable, Identifiable, Sendable {
     }
 
     // Tolerant decoding: new settings get defaults instead of dropping the alarm's challenges.
-    enum CodingKeys: String, CodingKey { case id, kind, shakeCount, mathDifficulty, mathProblems, journalWords }
+    enum CodingKeys: String, CodingKey { case id, kind, shakeCount, shakeSensitivity, mathDifficulty, mathProblems, journalWords }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         kind = try container.decode(Kind.self, forKey: .kind)
         id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         shakeCount = try container.decodeIfPresent(Int.self, forKey: .shakeCount) ?? 50
+        shakeSensitivity = try container.decodeIfPresent(Double.self, forKey: .shakeSensitivity) ?? ShakeDetector.defaultSensitivity
         mathDifficulty = try container.decodeIfPresent(MathDifficulty.self, forKey: .mathDifficulty) ?? .medium
         mathProblems = try container.decodeIfPresent(Int.self, forKey: .mathProblems) ?? 3
         journalWords = try container.decodeIfPresent(Int.self, forKey: .journalWords) ?? JournalRequirement.dream.minimumWords

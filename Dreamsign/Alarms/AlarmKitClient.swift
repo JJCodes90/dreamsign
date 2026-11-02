@@ -33,8 +33,6 @@ final class AlarmKitClient {
         var lastError: String?
     }
 
-    /// Follow-up rings past this index switch to the loudest sound.
-    static let escalationRing = 5
 
     private let manager = AlarmManager.shared
 
@@ -103,7 +101,9 @@ final class AlarmKitClient {
 
         case .scheduleRing(let request):
             var sound = AlarmSound(rawValue: request.soundID) ?? .system
-            if request.kind == .wake, request.index > Self.escalationRing { sound = .beacon }
+            // Custom AlarmKit sounds can play once or quietly on some iOS versions; the system
+            // alarm sound is the dependable one, so follow-up wake rings always use it.
+            if request.kind == .wake, request.index > 0 { sound = .system }
             let configuration = makeConfiguration(
                 schedule: .fixed(request.ring.fireDate),
                 title: Self.title(label: request.label, kind: request.kind, ring: request.index),

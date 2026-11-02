@@ -9,9 +9,10 @@ final class ShakeMonitor {
     let isAvailable: Bool
 
     @ObservationIgnored private let manager = CMMotionManager()
-    @ObservationIgnored private var detector = ShakeDetector()
+    @ObservationIgnored private var detector: ShakeDetector
 
-    init(initialCount: Int = 0) {
+    init(initialCount: Int = 0, sensitivity: Double = ShakeDetector.defaultSensitivity) {
+        detector = ShakeDetector(sensitivity: sensitivity)
         isAvailable = manager.isDeviceMotionAvailable || manager.isAccelerometerAvailable
         count = initialCount
     }
@@ -58,12 +59,22 @@ final class ShakeMonitor {
 
 struct ShakeChallengeView: View {
     let target: Int
+    var sensitivity: Double = ShakeDetector.defaultSensitivity
     var onActivity: () -> Void
     var onComplete: () -> Void
 
-    @State private var monitor = ShakeMonitor(initialCount: Showcase.isActive ? 34 : 0)
+    @State private var monitor: ShakeMonitor
     @State private var finished = false
     @State private var bump = false
+
+    init(target: Int, sensitivity: Double = ShakeDetector.defaultSensitivity,
+         onActivity: @escaping () -> Void, onComplete: @escaping () -> Void) {
+        self.target = target
+        self.sensitivity = sensitivity
+        self.onActivity = onActivity
+        self.onComplete = onComplete
+        _monitor = State(initialValue: ShakeMonitor(initialCount: Showcase.isActive ? 34 : 0, sensitivity: sensitivity))
+    }
 
     private var remaining: Int { max(target - monitor.count, 0) }
     private var progress: Double { Double(min(monitor.count, target)) / Double(max(target, 1)) }

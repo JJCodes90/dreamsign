@@ -116,7 +116,8 @@ struct WakeFlowView: View {
     private func challengeView(_ challenge: Challenge) -> some View {
         switch challenge.kind {
         case .shake:
-            ShakeChallengeView(target: challenge.shakeCount, onActivity: { flow.activity() }) { advance() }
+            ShakeChallengeView(target: challenge.shakeCount, sensitivity: challenge.shakeSensitivity,
+                               onActivity: { flow.activity() }) { advance() }
         case .math:
             MathChallengeView(difficulty: challenge.mathDifficulty, target: challenge.mathProblems,
                               onActivity: { flow.activity() }) { advance() }
